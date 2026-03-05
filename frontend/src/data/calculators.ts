@@ -1,12 +1,6 @@
-import type { Calculator, CalculatorResult } from '../types/calculators';
+import type { Calculator } from '../types/calculators';
 
-// ── AUXILIARES ────────────────────────────────────────────────────
-function level(val: number, thresholds: [number, string][]): CalculatorResult['level'] {
-    for (const [t, l] of thresholds) {
-        if (val <= t) return l as CalculatorResult['level'];
-    }
-    return thresholds[thresholds.length - 1][1] as CalculatorResult['level'];
-}
+
 
 // ── CALCULADORAS ──────────────────────────────────────────────────
 export const calculators: Calculator[] = [
@@ -259,25 +253,54 @@ export const calculators: Calculator[] = [
         ],
         calculate: (i) => {
             const ag = i.na - (i.cl + i.hco3);
-            const phStatus = i.ph < 7.35 ? '🔴 Acidemia' : i.ph > 7.45 ? '🔵 Alcalemia' : '✅ Normal';
-            const paco2Status = i.paco2 < 35 ? 'Hipocapnia' : i.paco2 > 45 ? 'Hipercapnia' : 'Normal';
-            const hco3Status = i.hco3 < 22 ? 'Baixo' : i.hco3 > 26 ? 'Alto' : 'Normal';
-            const agStatus = ag > 12 ? `🔴 Elevado (> 12) — Acidose c/ AG` : '✅ Normal (< 12)';
-            const pao2Status = i.pao2 < 60 ? '🔴 Hipoxemia grave' : i.pao2 < 80 ? '🟡 Hipoxemia moderada' : '✅ Normal';
-            const disturbio =
-                i.ph < 7.35 && i.paco2 > 45 ? 'Acidose Respiratória' :
-                    i.ph < 7.35 && i.hco3 < 22 ? 'Acidose Metabólica' :
-                        i.ph > 7.45 && i.paco2 < 35 ? 'Alcalose Respiratória' :
-                            i.ph > 7.45 && i.hco3 > 26 ? 'Alcalose Metabólica' :
-                                'Gasometria normal / distúrbio misto';
+            const phStatus = i.ph < 7.35 ? 'Acidemia' : i.ph > 7.45 ? 'Alcalemia' : 'Normal';
+
+            let disturbio = 'Normal';
+            let compensacao = '';
+
+            if (i.ph < 7.35) { // Acidose
+                if (i.paco2 > 45 && i.hco3 >= 22) {
+                    disturbio = 'Acidose Respiratória';
+                    const hco3_esperado = 24 + (i.paco2 - 40) / 10;
+                    compensacao = i.hco3 > hco3_esperado + 3 ? 'Parcialmente compensada (Crônica?)' : 'Aguda / Não compensada';
+                } else if (i.hco3 < 22 && i.paco2 <= 45) {
+                    disturbio = 'Acidose Metabólica';
+                    const paco2_esperado = (1.5 * i.hco3) + 8;
+                    const margem = 2;
+                    if (i.paco2 < paco2_esperado - margem) compensacao = 'Alcalose Respiratória Associada';
+                    else if (i.paco2 > paco2_esperado + margem) compensacao = 'Acidose Respiratória Associada';
+                    else compensacao = 'Compensada';
+                } else if (i.paco2 > 45 && i.hco3 < 22) {
+                    disturbio = 'Acidose Mista (Respiratória + Metabólica)';
+                }
+            } else if (i.ph > 7.45) { // Alcalose
+                if (i.paco2 < 35 && i.hco3 <= 26) {
+                    disturbio = 'Alcalose Respiratória';
+                    const hco3_esperado = 24 - (2 * (40 - i.paco2) / 10);
+                    compensacao = i.hco3 < hco3_esperado - 3 ? 'Parcialmente compensada' : 'Aguda';
+                } else if (i.hco3 > 26 && i.paco2 >= 35) {
+                    disturbio = 'Alcalose Metabólica';
+                    const paco2_esperado = (0.7 * i.hco3) + 21;
+                    if (Math.abs(i.paco2 - paco2_esperado) <= 2) compensacao = 'Compensada';
+                    else compensacao = 'Não compensada';
+                } else if (i.paco2 < 35 && i.hco3 > 26) {
+                    disturbio = 'Alcalose Mista';
+                }
+            }
+
+            const agStatus = ag > 12 ? `Elevado (> 12)` : 'Normal';
+            const pao2Status = i.pao2 < 60 ? 'Hipoxemia Grave' : i.pao2 < 80 ? 'Hipoxemia Leve/Mod' : 'Normal';
+
             return {
                 value: Math.round(ag * 10) / 10,
                 unit: 'mEq/L (AG)',
-                interpretation: `${disturbio} | pH: ${phStatus} | PaCO₂: ${paco2Status} | HCO₃: ${hco3Status} | Ânion Gap: ${agStatus} | PaO₂: ${pao2Status}`,
-                level: i.ph >= 7.35 && i.ph <= 7.45 ? 'normal' : 'moderate',
+                interpretation: `${phStatus} | ${disturbio} ${compensacao ? '(' + compensacao + ')' : ''} | AG: ${agStatus} | PaO₂: ${pao2Status}`,
+                level: i.ph >= 7.35 && i.ph <= 7.45 ? 'normal' : i.ph < 7.20 || i.ph > 7.55 ? 'severe' : 'moderate',
                 extra: {
-                    'Distúrbio': disturbio, 'Ânion Gap': `${Math.round(ag)} mEq/L`,
-                    'pH': `${i.ph} (${phStatus})`, 'PaO₂': `${i.pao2} mmHg (${pao2Status})`,
+                    'Distúrbio Primário': disturbio,
+                    'Compensação': compensacao || 'N/A',
+                    'Ânion Gap': `${Math.round(ag)} mEq/L`,
+                    'PaO₂ status': pao2Status
                 },
             };
         },
@@ -311,42 +334,155 @@ export const calculators: Calculator[] = [
         references: ['Roca et al., Am J Respir Crit Care Med 2019'],
     },
 
-    // ─ 11. RECRUTABILIDADE PULMONAR ──────────────────────────────
+    // ─ 12. ÂNION GAP ESTENDIDO (DELTA-DELTA) ─────────────────────
     {
-        id: 'recrutabilidade',
-        name: 'Recrutabilidade Pulmonar',
-        shortName: 'Recrutabilidade',
-        category: 'mecanica',
-        description: 'Avalia resposta ao aumento de PEEP pela melhora da complacência estática.',
-        icon: '🔄',
-        formula: 'ΔCst = Cst(PEEP alto) − Cst(PEEP baixo)\nRecrutabilidade se ΔCst > 0',
+        id: 'anion_gap_delta',
+        name: 'Ânion Gap + Delta Gap + Delta Relação',
+        shortName: 'Ânion Gap Avançado',
+        category: 'gasometria',
+        description: 'Cálculo do AG corrigido pela albumina e avaliação de distúrbios mistos com Delta-Delta e Delta Relação.',
+        icon: '⚗️',
+        formula: 'AG = Na⁺ − (Cl⁻ + HCO₃⁻)\nAG corrigido = AG + 2,5 × (4 − Alb)\nΔ-Δ = (AG − 12) − (24 − HCO₃⁻)',
         fields: [
-            { key: 'vt', label: 'Volume Corrente (fixo)', unit: 'mL', type: 'number', defaultValue: 450, min: 100, max: 1000, step: 10 },
-            { key: 'pplat_baixo', label: 'P_platô com PEEP baixo', unit: 'cmH₂O', type: 'number', defaultValue: 24, min: 5, max: 50, step: 1 },
-            { key: 'peep_baixo', label: 'PEEP baixo', unit: 'cmH₂O', type: 'number', defaultValue: 5, min: 0, max: 20, step: 1 },
-            { key: 'pplat_alto', label: 'P_platô com PEEP alto', unit: 'cmH₂O', type: 'number', defaultValue: 28, min: 5, max: 50, step: 1 },
-            { key: 'peep_alto', label: 'PEEP alto', unit: 'cmH₂O', type: 'number', defaultValue: 15, min: 0, max: 25, step: 1 },
+            { key: 'na', label: 'Na⁺', unit: 'mEq/L', type: 'number', defaultValue: 140, min: 110, max: 170, step: 1 },
+            { key: 'cl', label: 'Cl⁻', unit: 'mEq/L', type: 'number', defaultValue: 105, min: 80, max: 140, step: 1 },
+            { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', type: 'number', defaultValue: 24, min: 5, max: 50, step: 0.5 },
+            { key: 'albumina', label: 'Albumina', unit: 'g/dL', type: 'number', defaultValue: 4.0, min: 1.0, max: 6.0, step: 0.1, hint: 'Normal: 3,5–4,5 g/dL. Hipoalbuminemia subestima o AG real.' },
         ],
         calculate: (i) => {
-            const cst_baixo = i.vt / (i.pplat_baixo - i.peep_baixo);
-            const cst_alto = i.vt / (i.pplat_alto - i.peep_alto);
-            const delta = cst_alto - cst_baixo;
+            const ag = i.na - (i.cl + i.hco3);
+            const ag_corrigido = ag + 2.5 * (4 - i.albumina);
+            const delta_delta = (ag - 12) - (24 - i.hco3);
+            const delta_relacao = (ag - 12) / (24 - i.hco3);
+            const interpretacao_delta =
+                delta_delta < -6 ? 'Acidose metabólica normal (hiperclorêmica) concomitante' :
+                    delta_delta > 6 ? 'Alcalose metabólica concomitante' :
+                        'Sem distúrbio misto detectado';
+            const ag_status = ag_corrigido > 16 ? '🔴 AG elevado — acidose com AG' : ag_corrigido > 12 ? '🟡 Limítrofe' : '✅ Normal';
             return {
-                value: Math.round(delta * 10) / 10,
-                unit: 'mL/cmH₂O (ΔCst)',
-                interpretation:
-                    delta > 0 ? `✅ Recrutável (ΔCst = +${delta.toFixed(1)}) — Cst melhorou com PEEP alto` :
-                        delta === 0 ? '⚠️ Sem recrutamento adicional' :
-                            `❌ Não recrutável (ΔCst = ${delta.toFixed(1)}) — Cst piorou com PEEP alto, evitar PEEP elevado`,
-                level: delta > 0 ? 'normal' : delta === 0 ? 'mild' : 'severe',
+                value: Math.round(ag_corrigido * 10) / 10,
+                unit: 'mEq/L (AG corrigido)',
+                interpretation: `AG: ${Math.round(ag)} | AG corrigido (Alb): ${Math.round(ag_corrigido * 10) / 10} — ${ag_status} | ΔΔ = ${delta_delta.toFixed(1)} → ${interpretacao_delta}`,
+                level: ag_corrigido > 16 ? 'severe' : ag_corrigido > 12 ? 'mild' : 'normal',
                 extra: {
-                    'Cst PEEP baixo': `${Math.round(cst_baixo * 10) / 10} mL/cmH₂O`,
-                    'Cst PEEP alto': `${Math.round(cst_alto * 10) / 10} mL/cmH₂O`,
+                    'AG bruto': `${Math.round(ag)} mEq/L`,
+                    'AG corrigido': `${Math.round(ag_corrigido * 10) / 10} mEq/L`,
+                    'Delta-Delta': delta_delta.toFixed(1),
+                    'Delta Relação': delta_relacao.toFixed(2),
+                    'Interpretação ΔΔ': interpretacao_delta,
+                },
+            };
+        },
+        references: ['Kaplan LJ, Kellum JA. Crit Care 2004'],
+    },
+
+    // ─ 13. VOLUME MINUTO ─────────────────────────────────────────
+    {
+        id: 'volume_minuto',
+        name: 'Volume Minuto e Ventilação Alveolar',
+        shortName: 'Volume Minuto',
+        category: 'ventilacao',
+        description: 'Calcula o Volume Minuto total e a Ventilação Alveolar real (descontando espaço morto).',
+        icon: '🌀',
+        formula: 'VM = VT × FR\nVA = (VT − Vd) × FR\nVd/VT normal ≈ 0,3',
+        fields: [
+            { key: 'vt_ml', label: 'Volume Corrente (VT)', unit: 'mL', type: 'number', defaultValue: 500, min: 100, max: 1500, step: 10 },
+            { key: 'fr', label: 'Frequência Respiratória', unit: 'irpm', type: 'number', defaultValue: 16, min: 5, max: 60, step: 1 },
+            { key: 'peso_kg', label: 'Peso (kg)', unit: 'kg', type: 'number', defaultValue: 70, min: 30, max: 200, step: 1, hint: 'Usado para calcular espaço morto anatômico (≈ 2–2,2 mL/kg)' },
+        ],
+        calculate: (i) => {
+            const vm = (i.vt_ml * i.fr) / 1000;
+            const vd_anatomico = i.peso_kg * 2.2;
+            const va = ((i.vt_ml - vd_anatomico) * i.fr) / 1000;
+            const vd_vt_ratio = vd_anatomico / i.vt_ml;
+            const vm_normal = vm >= 5 && vm <= 10;
+            return {
+                value: Math.round(vm * 100) / 100,
+                unit: 'L/min (VM)',
+                interpretation: `VM: ${vm.toFixed(1)} L/min (${vm_normal ? '✅ Normal 5–10 L/min' : vm < 5 ? '⚠️ Hipoventilação' : '⚠️ Hiperventilação'}) | VA: ${va.toFixed(1)} L/min | Vd/VT: ${(vd_vt_ratio * 100).toFixed(0)}%`,
+                level: vm_normal ? 'normal' : vm < 3 ? 'severe' : 'mild',
+                extra: {
+                    'VM total': `${vm.toFixed(1)} L/min`,
+                    'Ventilação Alveolar': `${va.toFixed(1)} L/min`,
+                    'Vd anatômico': `${Math.round(vd_anatomico)} mL`,
+                    'Vd/VT %': `${(vd_vt_ratio * 100).toFixed(0)}%`,
                 },
             };
         },
     },
+
+    // ─ 14. COMPLACÊNCIA DINÂMICA ─────────────────────────────────
+    {
+        id: 'complacencia_dinamica',
+        name: 'Complacência Dinâmica (Cdyn)',
+        shortName: 'Complacência Dinâmica',
+        category: 'mecanica',
+        description: 'Reflete resistência de vias aéreas + distensibilidade. Reduzida em broncoespasmo e secreção.',
+        icon: '🔩',
+        formula: 'Cdyn = VT ÷ (P_pico − PEEP)',
+        fields: [
+            { key: 'vt_ml', label: 'Volume Corrente', unit: 'mL', type: 'number', defaultValue: 450, min: 100, max: 1000, step: 10 },
+            { key: 'p_pico', label: 'Pressão de Pico', unit: 'cmH₂O', type: 'number', defaultValue: 25, min: 5, max: 60, step: 1 },
+            { key: 'peep', label: 'PEEP', unit: 'cmH₂O', type: 'number', defaultValue: 5, min: 0, max: 20, step: 1 },
+            { key: 'p_plat', label: 'Pressão de Platô', unit: 'cmH₂O', type: 'number', defaultValue: 20, min: 5, max: 50, step: 1, hint: 'Opcional: fornece resistência automática' },
+        ],
+        calculate: (i) => {
+            const cdyn = i.vt_ml / (i.p_pico - i.peep);
+            const cst = i.vt_ml / (i.p_plat - i.peep);
+            const diff = cst - cdyn;
+            return {
+                value: Math.round(cdyn * 10) / 10,
+                unit: 'mL/cmH₂O',
+                interpretation:
+                    cdyn >= 50 ? '✅ Normal (≥ 50)' :
+                        cdyn >= 35 ? '🟡 Levemente reduzida — atenção a vias aéreas' :
+                            '🔴 Muito reduzida — broncoespasmo ou secreção?',
+                level: cdyn >= 50 ? 'normal' : cdyn >= 35 ? 'mild' : 'severe',
+                extra: {
+                    'Cdyn': `${Math.round(cdyn * 10) / 10} mL/cmH₂O`,
+                    'Cst': `${Math.round(cst * 10) / 10} mL/cmH₂O`,
+                    'ΔCdyn–Cst': `${Math.round(diff * 10) / 10} (ΔP resistivo)`,
+                },
+            };
+        },
+    },
+
+    // ─ 15. CONSTANTE DE TEMPO ────────────────────────────────────
+    {
+        id: 'constante_tempo',
+        name: 'Constante de Tempo (RC)',
+        shortName: 'Constante de Tempo',
+        category: 'mecanica',
+        description: 'Tempo necessário para equilibrar pressão e volume. Importante para ajuste de relação I:E.',
+        icon: '⏱️',
+        formula: 'RC = Complacência × Resistência (em unidades SI)',
+        fields: [
+            { key: 'complacencia', label: 'Complacência Estática', unit: 'mL/cmH₂O', type: 'number', defaultValue: 50, min: 5, max: 200, step: 1 },
+            { key: 'resistencia', label: 'Resistência de VA', unit: 'cmH₂O/L/s', type: 'number', defaultValue: 10, min: 2, max: 50, step: 1, hint: 'Normal ≤ 5; Doença obstrutiva pode ser 15–30+' },
+        ],
+        calculate: (i) => {
+            const cst_L = i.complacencia / 1000;
+            const rc = cst_L * i.resistencia;
+            const rc_ms = Math.round(rc * 1000);
+            return {
+                value: rc_ms,
+                unit: 'ms',
+                interpretation:
+                    rc_ms < 500 ? '✅ Normal (< 500 ms) — tempo expiratório adequado' :
+                        rc_ms < 1000 ? '🟡 Moderadamente aumentada — prolongar tempo expiratório' :
+                            '🔴 Muito aumentada (> 1000 ms) — risco de armadilha de ar (auto-PEEP)',
+                level: rc_ms < 500 ? 'normal' : rc_ms < 1000 ? 'mild' : 'severe',
+                extra: {
+                    'RC': `${rc_ms} ms (${(rc).toFixed(2)} s)`,
+                    'T_exp recomendado': `≥ ${(rc * 3).toFixed(1)}s (3×RC)`,
+                    'Risco auto-PEEP': rc_ms > 1000 ? 'Alto' : rc_ms > 500 ? 'Moderado' : 'Baixo',
+                },
+            };
+        },
+        references: ['Marini JJ. Respir Care 1990'],
+    },
 ];
+
 
 // ─ ESCALAS CLÍNICAS ────────────────────────────────────────────
 export interface ClinicalScale {
@@ -503,7 +639,160 @@ export const clinicalScales: ClinicalScale[] = [
         }),
         scoringNote: 'Score total: 0–60 (6 grupos × 5). Insira o total diretamente.',
     },
+    // ─ HACOR ───────────────────────────────────────────────────────
+    {
+        id: 'hacor',
+        name: 'Escala HACOR — Risco de Falha da VNI',
+        shortName: 'HACOR',
+        category: 'escalas',
+        description: 'Prediz falha da VNI em 1h após início. Score ≥ 5 = alto risco de intubação.',
+        icon: '🫁',
+        groups: [
+            {
+                name: 'pH arterial',
+                key: 'ph',
+                items: [
+                    { value: 0, label: 'pH ≥ 7,35', description: 'Normal ou levemente acidêmico' },
+                    { value: 2, label: 'pH 7,30–7,34', description: 'Acidemia moderada' },
+                    { value: 3, label: 'pH < 7,30', description: 'Acidemia grave' },
+                ],
+            },
+            {
+                name: 'Escala de Glasgow (ECG)',
+                key: 'glasgow',
+                items: [
+                    { value: 0, label: 'ECG ≥ 13', description: 'Leve' },
+                    { value: 2, label: 'ECG 10–12', description: 'Moderado' },
+                    { value: 4, label: 'ECG ≤ 9', description: 'Grave' },
+                ],
+            },
+            {
+                name: 'Frequência Respiratória',
+                key: 'fr',
+                items: [
+                    { value: 0, label: 'FR ≤ 30 irpm', description: 'Normal' },
+                    { value: 1, label: 'FR 31–35 irpm', description: 'Moderada' },
+                    { value: 2, label: 'FR > 35 irpm', description: 'Grave' },
+                ],
+            },
+            {
+                name: 'SpO₂/FiO₂ (Índice SF)',
+                key: 'sf',
+                items: [
+                    { value: 0, label: 'SF ≥ 235', description: 'Boa oxigenação (SpO₂/FiO₂ ≥ 235)' },
+                    { value: 1, label: 'SF 188–234', description: 'Oxigenação moderada' },
+                    { value: 2, label: 'SF < 188', description: 'Hipoxemia grave' },
+                ],
+            },
+            {
+                name: 'Encefalopatia',
+                key: 'encefalop',
+                items: [
+                    { value: 0, label: 'Ausente', description: 'Sem confusão ou agitação' },
+                    { value: 1, label: 'Presente', description: 'Confusão, agitação ou estado mental alterado' },
+                ],
+            },
+        ],
+        interpret: (total) => ({
+            text:
+                total < 2 ? '✅ Baixo risco de falha da VNI (HACOR < 2)' :
+                    total < 5 ? '🟡 Risco intermediário — monitorar de perto' :
+                        '🔴 ALTO RISCO de falha da VNI (≥ 5) — considerar intubação precoce',
+            level: total < 2 ? 'normal' : total < 5 ? 'moderate' : 'critical',
+        }),
+        scoringNote: 'Avaliar 1h após início da VNI. Score ≥ 5 = 45% de chance de falha.',
+    },
+    // ─ SOFA ────────────────────────────────────────────────────────
+    {
+        id: 'sofa',
+        name: 'SOFA Score — Avaliação de Falência Orgânica',
+        shortName: 'SOFA',
+        category: 'escalas',
+        description: 'Sequential Organ Failure Assessment. Avalia 6 sistemas para predizer mortalidade em UTI.',
+        icon: '🏥',
+        groups: [
+            {
+                name: 'Oxigenação (Relação P/F)',
+                key: 'resp',
+                items: [
+                    { value: 0, label: 'P/F > 400', description: 'Normal' },
+                    { value: 1, label: 'P/F ≤ 400', description: 'Disfunção leve' },
+                    { value: 2, label: 'P/F ≤ 300', description: 'Disfunção moderada' },
+                    { value: 3, label: 'P/F ≤ 200 (c/ suporte)', description: 'SDRA grave' },
+                    { value: 4, label: 'P/F ≤ 100 (c/ suporte)', description: 'Insuficiência respiratória grave' },
+                ],
+            },
+            {
+                name: 'Coagulação (Plaquetas)',
+                key: 'coag',
+                items: [
+                    { value: 0, label: '≥ 150 mil', description: 'Normal' },
+                    { value: 1, label: '< 150 mil', description: 'Trombocitopenia leve' },
+                    { value: 2, label: '< 100 mil', description: 'Trombocitopenia moderada' },
+                    { value: 3, label: '< 50 mil', description: 'Trombocitopenia grave' },
+                    { value: 4, label: '< 20 mil', description: 'Alto risco de sangramento' },
+                ],
+            },
+            {
+                name: 'Fígado (Bilirrubina)',
+                key: 'liv',
+                items: [
+                    { value: 0, label: '< 1,2 mg/dL', description: 'Normal' },
+                    { value: 1, label: '1,2–1,9 mg/dL', description: 'Aumento leve' },
+                    { value: 2, label: '2,0–5,9 mg/dL', description: 'Disfunção hepática moderada' },
+                    { value: 3, label: '6,0–11,9 mg/dL', description: 'Icterícia grave' },
+                    { value: 4, label: '> 12,0 mg/dL', description: 'Falência hepática' },
+                ],
+            },
+            {
+                name: 'Cardiovascular (PAM / Drotrop.)',
+                key: 'cv',
+                items: [
+                    { value: 0, label: 'PAM ≥ 70 mmHg', description: 'Normal' },
+                    { value: 1, label: 'PAM < 70 mmHg', description: 'Hipotensão' },
+                    { value: 2, label: 'Dopamina ≤ 5 ou Dobutamina', description: 'Uso de drogas vasoativas (DVA)' },
+                    { value: 3, label: 'Dopamina > 5 ou Noradrenalina ≤ 0,1', description: 'DVA doses moderadas' },
+                    { value: 4, label: 'Dopamina > 15 ou Noradrenalina > 0,1', description: 'Choque refratário' },
+                ],
+            },
+            {
+                name: 'Neurológico (Glasgow)',
+                key: 'glas',
+                items: [
+                    { value: 0, label: 'ECG 15', description: 'Normal' },
+                    { value: 1, label: 'ECG 13–14', description: 'Disfunção leve' },
+                    { value: 2, label: 'ECG 10–12', description: 'Disfunção moderada' },
+                    { value: 3, label: 'ECG 6–9', description: 'Disfunção grave' },
+                    { value: 4, label: 'ECG < 6', description: 'Coma profundo' },
+                ],
+            },
+            {
+                name: 'Renal (Creatinina / Diurese)',
+                key: 'ren',
+                items: [
+                    { value: 0, label: '< 1,2 mg/dL', description: 'Normal' },
+                    { value: 1, label: '1,2–1,9 mg/dL', description: 'Aumento leve' },
+                    { value: 2, label: '2,0–3,4 mg/dL', description: 'Disfunção renal moderada' },
+                    { value: 3, label: '3,5–4,9 mg/dL ou < 500 mL/dia', description: 'Oligúria' },
+                    { value: 4, label: '> 5,0 mg/dL ou < 200 mL/dia', description: 'Anúria / Falência renal' },
+                ],
+            },
+        ],
+        interpret: (total) => {
+            const mortality =
+                total <= 1 ? '< 10%' :
+                    total <= 3 ? '10-20%' :
+                        total <= 9 ? '20-30%' :
+                            total <= 12 ? '40-50%' : '> 80%';
+            return {
+                text: `Score Total: ${total} | Mortalidade estimada: ${mortality}`,
+                level: total <= 3 ? 'normal' : total <= 9 ? 'moderate' : 'critical',
+            };
+        },
+        scoringNote: 'Score de 0 a 24. Pontuação maior indica pior prognóstico.',
+    },
 ];
+
 
 export const calculatorCategories: Record<string, { label: string; color: string }> = {
     oxigenacao: { label: 'Oxigenação', color: '#38bdf8' },

@@ -22,10 +22,7 @@ const app = Fastify({
 
 // ─── Plugins ─────────────────────────────────────────────────────
 await app.register(cors, {
-    origin: (origin, cb) => {
-        // Allows any origin (reflection)
-        cb(null, true);
-    },
+    origin: true, // Reflete dinamicamente qualquer Origin do Request
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-device-key'],
     credentials: true,

@@ -21,12 +21,11 @@ const app = Fastify({
 });
 
 // ─── Plugins ─────────────────────────────────────────────────────
-const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
-    .split(',')
-    .map(s => s.trim());
-
 await app.register(cors, {
-    origin: origins,
+    origin: (origin, cb) => {
+        // Allows any origin (reflection)
+        cb(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-device-key'],
     credentials: true,

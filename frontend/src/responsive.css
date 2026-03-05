@@ -1,0 +1,560 @@
+/* ─── PROTOCOLS PAGE RESPONSIVE ──────────────────────────────── */
+.protocols-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Seletor de protocolo — scroll horizontal no mobile */
+.proto-selector {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.proto-selector::-webkit-scrollbar {
+    display: none;
+}
+
+.proto-selector__btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.proto-selector__btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}
+
+.proto-selector__btn.active {
+    background: rgba(14, 165, 233, 0.15);
+    border-color: var(--primary-500);
+    color: var(--primary-300);
+    box-shadow: var(--shadow-glow);
+}
+
+/* Header do protocolo */
+.proto-header__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.proto-tag {
+    font-size: 0.68rem;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: 99px;
+    padding: 2px 8px;
+}
+
+.proto-tag--blue {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    border-color: var(--border-light);
+}
+
+.proto-header__title {
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.proto-header__def {
+    font-size: 0.875rem;
+    line-height: 1.7;
+}
+
+/* Tabs — scroll horizontal no mobile */
+.proto-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: wrap;
+}
+
+.proto-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.proto-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    background: transparent;
+    color: #64748b;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.proto-tab-btn.active {
+    border-color: var(--primary-500);
+    background: rgba(14, 165, 233, 0.15);
+    color: var(--primary-300);
+}
+
+.proto-tab-btn__icon {
+    font-size: 0.9rem;
+}
+
+.proto-tab-btn__label {}
+
+/* Criteria cards — substitui a tabela */
+.criteria-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.criteria-card {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    transition: border-color 0.2s;
+}
+
+.criteria-card:hover {
+    border-color: var(--border-light);
+}
+
+.criteria-card__top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.criteria-card__domain {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.criteria-card__desc {
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.criteria-card__value {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+/* Berlin grid — responsivo */
+.berlin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.berlin-card {
+    border: 1px solid;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+}
+
+@media (max-width: 400px) {
+    .berlin-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Nota de fonte */
+.proto-source-note {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-bottom: 16px;
+    padding: 6px 10px;
+    background: rgba(14, 165, 233, 0.05);
+    border-radius: 6px;
+}
+
+.proto-disclaimer {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: rgba(14, 165, 233, 0.04);
+    border-radius: 8px;
+    font-size: 0.72rem;
+    color: #475569;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+/* ─── FAVORITOS / COMPARTILHAMENTO ───────────────────────────── */
+.tool-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.fav-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.fav-btn:hover {
+    background: rgba(234, 179, 8, 0.1);
+    border-color: rgba(234, 179, 8, 0.3);
+    color: #facc15;
+}
+
+.fav-btn.active {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: #ca8a04;
+    color: #facc15;
+}
+
+/* Toast de cópia */
+.copy-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(14, 165, 233, 0.9);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 9999;
+    animation: toastIn 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4);
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ─── FIXES GERAIS MOBILE ────────────────────────────────────── */
+@media (max-width: 639px) {
+
+    /* Sem overflow horizontal global — mas NÃO bloquear tabs scrolláveis */
+    .card {
+        overflow-x: clip;
+    }
+
+    /* Proto tabs: grade 2x2 no mobile para todas as abas ficarem visíveis */
+    .proto-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        overflow-x: unset;
+        flex-wrap: unset;
+    }
+
+    .proto-tab-btn {
+        justify-content: center;
+        text-align: center;
+        font-size: 0.75rem;
+        padding: 9px 8px;
+        flex-shrink: unset;
+    }
+
+    /* Simulador left panel: sliders não cortam */
+    .simulator-left .card,
+    .simulator-center .card,
+    .simulator-right .card {
+        min-width: 0;
+    }
+
+    /* Métricas: 2 colunas no mobile (já definido, mas reforço) */
+    .metric-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .metric-tile__value {
+        font-size: 1.25rem;
+    }
+
+    /* Home: module cards full-width */
+    .module-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .module-card {
+        padding: 20px;
+    }
+
+    .module-card__features {
+        display: none;
+    }
+
+    /* simplifica no mobile */
+
+    /* Fonte: texto menor */
+    .source-card {
+        flex-wrap: wrap;
+    }
+
+    .source-card__meta {
+        font-size: 0.7rem;
+    }
+
+    /* Decision step: texto menor */
+    .decision-step__content {
+        font-size: 0.82rem;
+    }
+
+    /* Param row: empilha no mobile muito pequeno */
+    .param-row {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .param-row__value {
+        font-size: 0.82rem;
+    }
+
+    /* TopBar: título menor */
+    .topbar__title {
+        font-size: 0.9rem;
+    }
+
+    /* Fisio Tools: filtros em 2 linhas ok */
+    .filter-chip {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+    }
+
+    /* Proto tabs header: responsivo */
+    .proto-header__title {
+        font-size: 1rem;
+    }
+}
+
+/* Tela muito pequena (< 360px) */
+@media (max-width: 360px) {
+    .main-content {
+        padding: 12px;
+    }
+
+    .berlin-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .proto-tab-btn__icon {
+        display: none;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TABLET  640 – 1023px
+   Sidebar de 72px (só ícones) + tooltip hover
+   ───────────────────────────────────────────────────────────── */
+@media (min-width: 640px) and (max-width: 1023px) {
+
+    /* Reduz a variável de largura da sidebar */
+    :root {
+        --sidebar-w: 72px;
+    }
+
+    /* ── Sidebar compacta ── */
+    .sidebar {
+        width: 72px;
+        overflow: visible;
+        /* tooltip fica fora do clip */
+        padding: 0 0 16px 0;
+    }
+
+    /* Esconde textos, logo, status e badges */
+    .sidebar__logo-title,
+    .sidebar__logo-sub,
+    .sidebar__section-label,
+    .sidebar__section-title,
+    .sidebar__nav-label,
+    .sidebar__status,
+    .sidebar__footer,
+    .nav-item__badge {
+        display: none;
+    }
+
+    /* Nav: itens centralizados só com ícone */
+    .sidebar__nav {
+        padding: 0 8px;
+        gap: 4px;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 12px 0;
+        border-radius: 12px;
+        position: relative;
+    }
+
+    /* Oculta label de texto mas mantém o ícone */
+    .nav-item span:not(.nav-item__icon):not(.nav-item__badge) {
+        display: none;
+    }
+
+    /* Ícone maior no modo compacto */
+    .nav-item__icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* Tooltip ao hover */
+    .nav-item::after {
+        content: attr(data-label);
+        position: absolute;
+        left: calc(100% + 12px);
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(10, 25, 41, 0.95);
+        border: 1px solid var(--border-light);
+        color: var(--text-primary);
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 8px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        z-index: 200;
+    }
+
+    .nav-item:hover::after {
+        opacity: 1;
+    }
+
+    /* ── Topbar ajustada ── */
+    .topbar {
+        left: 72px;
+        padding: 0 16px;
+    }
+
+    .topbar__title {
+        font-size: 1rem;
+    }
+
+    .topbar__breadcrumb {
+        display: none;
+    }
+
+    /* ── Conteúdo principal ── */
+    .main-content {
+        margin-left: 72px;
+        padding: 20px;
+    }
+
+    /* ── Home — 2 colunas de módulo ── */
+    .module-cards {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .module-card__features {
+        display: none;
+    }
+
+    /* ── Proto tabs — 4 em linha (tela tem espaço) ── */
+    .proto-tabs {
+        display: flex;
+        grid-template-columns: unset;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    .proto-tab-btn {
+        justify-content: unset;
+        text-align: left;
+        font-size: 0.8rem;
+        padding: 8px 14px;
+    }
+
+    /* ── Simulador — 2 colunas (painel esq + gráfico) ── */
+    .simulator-grid {
+        grid-template-columns: 280px 1fr;
+        gap: 16px;
+    }
+
+    .simulator-right {
+        display: none;
+    }
+
+    /* métricas ficam abaixo */
+
+    /* ── Metric grid: 3 colunas em tablet ── */
+    .metric-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* ── Tools: 2 colunas de tool-card ── */
+    .tools-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    /* section-divider ocupa linha inteira */
+    .tools-list .section-divider {
+        grid-column: 1 / -1;
+    }
+
+    /* ── Bottom-nav escondida em tablet ── */
+    .bottom-nav {
+        display: none;
+    }
+}

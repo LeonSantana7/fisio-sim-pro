@@ -1,0 +1,256 @@
+// FisioSim API — Prisma Schema
+// Simplificado para o schema public (padrão)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===================================================================
+// DEVICES
+// ===================================================================
+model Device {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  deviceKey  String   @unique @map("device_key")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeen   DateTime @default(now()) @map("last_seen") @db.Timestamptz(6)
+  userAgent  String?  @map("user_agent")
+
+  favorites          Favorite[]
+  calculationHistory CalculationHistory[]
+  simSessions        VentSimulationSession[]
+
+  @@map("devices")
+}
+
+// ===================================================================
+// USERS
+// ===================================================================
+model User {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email     String?  @unique
+  name      String?
+  role      String   @default("fisioterapeuta")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  favorites          Favorite[]
+  calculationHistory CalculationHistory[]
+  simSessions        VentSimulationSession[]
+
+  @@map("users")
+}
+
+// ===================================================================
+// CALCULADORAS
+// ===================================================================
+model CalculatorCategory {
+  id        String  @id
+  label     String
+  color     String  @default("#38bdf8")
+  icon      String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  calculators Calculator[]
+
+  @@map("calculator_categories")
+}
+
+model Calculator {
+  id          String   @id
+  categoryId  String   @map("category_id")
+  shortName   String   @map("short_name")
+  fullName    String   @map("full_name")
+  description String
+  formula     String
+  icon        String   @default("🧮")
+  isActive    Boolean  @default(true) @map("is_active")
+  references  Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  category CalculatorCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("calculators")
+}
+
+model ClinicalScale {
+  id          String   @id
+  shortName   String   @map("short_name")
+  fullName    String   @map("full_name")
+  description String
+  icon        String   @default("📊")
+  scoringNote String?  @map("scoring_note")
+  isActive    Boolean  @default(true) @map("is_active")
+  groups      Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("clinical_scales")
+}
+
+// ===================================================================
+// FAVORITOS
+// ===================================================================
+model Favorite {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  deviceId  String?  @map("device_id") @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  toolId    String   @map("tool_id")
+  toolType  String   @map("tool_type")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  device Device? @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("favorites")
+}
+
+// ===================================================================
+// HISTORICO
+// ===================================================================
+model CalculationHistory {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  deviceId       String?  @map("device_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  toolId         String   @map("tool_id")
+  toolType       String   @map("tool_type")
+  inputValues    Json     @map("input_values")
+  resultValue    String   @map("result_value")
+  resultUnit     String?  @map("result_unit")
+  resultLevel    String?  @map("result_level")
+  interpretation String?
+  calculatedAt   DateTime @default(now()) @map("calculated_at") @db.Timestamptz(6)
+
+  device Device? @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("calculation_history")
+}
+
+// ===================================================================
+// PROTOCOLOS
+// ===================================================================
+model Protocol {
+  id            String   @id
+  name          String
+  fullName      String   @map("full_name")
+  icd10         String
+  icf           String?
+  category      String
+  definition    String
+  evidenceLevel String   @default("1A") @map("evidence_level")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  criteria     ProtocolCriteria[]
+  targets      ProtocolTarget[]
+  sources      ProtocolSource[]
+  decisionFlow ProtocolDecisionFlow[]
+
+  @@map("protocols")
+}
+
+model ProtocolCriteria {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  protocolId  String   @map("protocol_id")
+  type        String
+  domain      String
+  description String
+  operator    String?
+  threshold   Decimal? @db.Decimal
+  unit        String?
+  sortOrder   Int      @default(0) @map("sort_order")
+
+  protocol Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_criteria")
+}
+
+model ProtocolTarget {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  protocolId   String   @map("protocol_id")
+  name         String
+  description  String
+  formula      String?
+  thresholdMin Decimal? @map("threshold_min") @db.Decimal
+  thresholdMax Decimal? @map("threshold_max") @db.Decimal
+  unit         String
+  alertLevel   String   @map("alert_level")
+  sortOrder    Int      @default(0) @map("sort_order")
+
+  protocol Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_targets")
+}
+
+model ProtocolSource {
+  id         String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  protocolId String  @map("protocol_id")
+  type       String
+  title      String
+  authors    String
+  journal    String
+  year       Int
+  doi        String?
+  sortOrder  Int     @default(0) @map("sort_order")
+
+  protocol Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_sources")
+}
+
+model ProtocolDecisionFlow {
+  id         String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  protocolId String @map("protocol_id")
+  stepNumber Int    @map("step_number")
+  stepText   String @map("step_text")
+
+  protocol Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_decision_flow")
+}
+
+// ===================================================================
+// SIMULADOR
+// ===================================================================
+model VentScenario {
+  id          String  @id
+  name        String
+  description String
+  compliance  Decimal @db.Decimal
+  resistance  Decimal @db.Decimal
+  rr          Int
+  tidalVolume Decimal @map("tidal_volume") @db.Decimal
+  fio2        Decimal @db.Decimal
+  peep        Decimal @db.Decimal
+  ieRatio     Decimal @default(0.5) @map("ie_ratio") @db.Decimal
+  isActive    Boolean @default(true) @map("is_active")
+
+  sessions VentSimulationSession[]
+
+  @@map("vent_scenarios")
+}
+
+model VentSimulationSession {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  deviceId    String?   @map("device_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  scenarioId  String?   @map("scenario_id")
+  mode        String
+  parameters  Json
+  metrics     Json
+  durationSec Int?      @map("duration_sec")
+  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt     DateTime? @map("ended_at") @db.Timestamptz(6)
+
+  device   Device?       @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user     User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenario VentScenario? @relation(fields: [scenarioId], references: [id])
+
+  @@map("vent_simulation_sessions")
+}

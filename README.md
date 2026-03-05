@@ -70,7 +70,4 @@ Na pasta `backend`, execute:
 - **Styling**: Vanilla CSS (Modern Design)
 
 ---
-*Para instruções de implantação em servidores reais, consulte o arquivo [DEPLOY.md](./DEPLOY.md).*
-
----
 *FisioSim Pro - A tecnologia a serviço da Fisioterapia.*

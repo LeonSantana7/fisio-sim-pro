@@ -115,8 +115,9 @@
     background: var(--bg-panel);
     border: 1px solid var(--glass-border);
     border-radius: 24px 24px 0 0;
-    max-height: 92dvh;
-    overflow-y: auto;
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
     animation: sheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     box-shadow: var(--shadow-lg);
 }
@@ -135,6 +136,7 @@
     gap: 12px;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
 }
 
 .modal-close {
@@ -157,6 +159,12 @@
     color: var(--text-primary);
 }
 
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
 .modal-formula {
     padding: 14px 20px;
     background: rgba(14, 165, 233, 0.04);
@@ -166,6 +174,43 @@
 .modal-inputs {
     padding: 20px;
     border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal-footer {
+    padding: 20px;
+    flex-shrink: 0;
+    background: var(--bg-panel);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    color: #fff;
+    border: 1px solid var(--primary-400);
+    border-radius: var(--radius-md);
+    padding: 12px 20px;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.25);
+    width: 100%;
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+}
+
+.copy-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 10px rgba(14, 165, 233, 0.3);
 }
 
 .modal-result {
@@ -204,7 +249,7 @@
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    padding: 6px 16px;
+    padding: 6px 4px;
     border-radius: 14px;
     border: none;
     background: transparent;
@@ -214,7 +259,8 @@
     transition: all 0.2s;
     font-size: 0.6rem;
     font-weight: 600;
-    min-width: 56px;
+    flex: 1;
+    min-width: 0;
 }
 
 .bottom-nav__item.active {
@@ -319,8 +365,19 @@
         overflow-y: unset;
     }
 
-    .protocol-tabs {
-        flex-wrap: wrap;
+
+    .proto-selector,
+    .proto-tabs {
+        margin-left: -12px;
+        margin-right: -12px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .proto-selector::after,
+    .proto-tabs::after {
+        content: '';
+        padding-right: 12px;
     }
 
     .metric-grid {

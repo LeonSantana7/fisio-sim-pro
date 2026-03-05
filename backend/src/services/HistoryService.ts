@@ -55,4 +55,10 @@ export class HistoryService {
         });
         return count;
     }
+
+    static async deleteById(id: string) {
+        return prisma.calculationHistory.delete({
+            where: { id },
+        });
+    }
 }

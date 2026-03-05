@@ -53,7 +53,25 @@ export class FavoriteController {
             await FavoriteService.removeByTool(deviceKey, toolId, toolType);
             return reply.code(204).send();
         } catch {
-            return reply.code(404).send({ error: 'Dispositivo não encontrado' });
+            return reply.code(404).send({ error: 'Dispositivo ou favorito não encontrado' });
+        }
+    }
+
+    static async toggle(req: FastifyRequest, reply: FastifyReply) {
+        const parsed = AddFavoriteBody.safeParse(req.body);
+        if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+        const { deviceKey, toolId, toolType } = parsed.data;
+        const favorites = await FavoriteService.listByDevice(deviceKey);
+        const existing = favorites.find(f => f.toolId === toolId);
+
+        if (existing) {
+            await FavoriteService.removeById(existing.id);
+            return reply.send({ data: { removed: true, toolId } });
+        } else {
+            const userAgent = req.headers['user-agent'];
+            const record = await FavoriteService.add(deviceKey, toolId, toolType, userAgent);
+            return reply.code(201).send({ data: { ...record, success: true } });
         }
     }
 }

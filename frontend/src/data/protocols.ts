@@ -159,4 +159,45 @@ export const protocols: ClinicalProtocol[] = [
             { id: 's5', authors: 'Maggiore SM et al.', year: 2014, title: 'Noninvasive Ventilation after Failure of Prophylactic High-Flow Nasal Cannula Oxygen', journal: 'American Journal of Respiratory and Critical Care Medicine', doi: '10.1164/rccm.201312-2219OC', type: 'rct' },
         ],
     },
+    {
+        id: 'mobilizacao',
+        slug: 'mobilizacao',
+        name: 'Mobilização',
+        fullName: 'Protocolo de Mobilização Precoce (FisioMobilize)',
+        category: 'Fisioterapia Motora',
+        icd10: 'Z51.8',
+        icf: 'b710-b789',
+        evidenceLevel: '1A',
+        definition:
+            'Conjunto de intervenções terapêuticas iniciadas nas primeiras 48h de admissão na UTI, visando reduzir as complicações da imobilidade, como fraqueza muscular adquirida (ICU-AW) e delírio, através de exercícios e progressão de carga funcional.',
+        diagnosticCriteria: [
+            { id: 'dc1', type: 'exclusion', domain: 'Hemodinâmica', description: 'PAM < 65 ou > 110 mmHg | Uso de DVA em doses crescentes/altas' },
+            { id: 'dc2', type: 'exclusion', domain: 'Respiratório', description: 'SpO₂ < 88% | FR > 35 irpm | FiO₂ > 60% | PEEP > 12 cmH₂O' },
+            { id: 'dc3', type: 'exclusion', domain: 'Neurológico', description: 'RASS < −2 ou > +2 | ECG < 8 | Hipertensão Intracraniana (HIC) não controlada' },
+            { id: 'dc4', type: 'exclusion', domain: 'Outros', description: 'Frequência Cardíaca < 40 ou > 130 bpm | Arritmias graves instáveis' },
+        ],
+        decisionFlow: [
+            'Verificar Critérios de Segurança (Sem critérios de exclusão ativos)',
+            'Se critério de exclusão ativo: realizar APENAS Mobilização Passiva (cuidado: monitorar sinais vitais)',
+            'Nível 1 (Acamado): Exercícios passivos / ativos assistidos no leito + posicionamento',
+            'Nível 2 (Sentar no leito): Transferência para sedestação com apoio + exercícios de tronco',
+            'Nível 3 (Sedestação fora do leito): Poltrona (mínimo 30 min) + exercícios ativos de MMSS/MMII',
+            'Nível 4 (Ortostase): Ficar em pé (com ou sem auxílio de guincho/andador)',
+            'Nível 5 (Deambulação): Caminhar (beira-leito ou corredor) + treino de marcha',
+            'Monitorar durante a sessão: Borg (Cansaço) e Sinais Vitais. Interromper se queda de SpO₂ ou instabilidade.',
+        ],
+        decisionNodes: {},
+        targetParameters: [
+            { id: 'tp1', name: 'Escala RASS', thresholdMin: -2, thresholdMax: 1, unit: '', alertLevel: 'yellow', description: 'Janela ideal para cooperação e exercícios ativos' },
+            { id: 'tp2', name: 'Escala de Borg', thresholdMax: 6, unit: '', alertLevel: 'yellow', description: 'Manter percepção de esforço moderada (4 a 6 na escala de 10)' },
+            { id: 'tp3', name: 'SpO₂ durante exercício', thresholdMin: 88, unit: '%', alertLevel: 'red', description: 'Queda > 4% do basal ou < 88% indica necessidade de pausa' },
+            { id: 'tp4', name: 'Frequência Cardíaca', thresholdMax: 130, unit: 'bpm', alertLevel: 'red', description: 'Evitar taquicardia excessiva durante mobilização ativa' },
+        ],
+        sources: [
+            { id: 's1', authors: 'Hodgson CL et al.', year: 2014, title: 'Expert consensus and recommendations on safety criteria for active mobilization of mechanically ventilated critically ill adults', journal: 'Critical Care', type: 'consensus' },
+            { id: 's2', authors: 'Schaller SJ et al.', year: 2016, title: 'Early, goal-directed mobilisation in the surgical intensive care unit', journal: 'The Lancet', type: 'rct' },
+            { id: 's3', authors: 'Schweickert WD et al.', year: 2009, title: 'Early physical and occupational therapy in mechanically ventilated, critically ill patients', journal: 'The Lancet', type: 'rct' },
+        ],
+    },
 ];
+

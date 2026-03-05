@@ -6,14 +6,16 @@ import HomePage from './pages/HomePage';
 import SimulatorPage from './pages/SimulatorPage';
 import ProtocolsPage from './pages/ProtocolsPage';
 import ToolsPage from './pages/ToolsPage';
+import HistoryPage from './pages/HistoryPage';
 
-export type Page = 'home' | 'simulator' | 'protocols' | 'tools';
+export type Page = 'home' | 'simulator' | 'protocols' | 'tools' | 'history';
 
 const pageConfig: Record<Page, { title: string; subtitle: string; tag: string }> = {
   home: { title: 'FisioSim Pro', subtitle: 'Fisioterapia Intensivista', tag: 'v0.1.0' },
   simulator: { title: 'Simulador de Ventilação', subtitle: 'Módulo 1 · Motor Físico', tag: 'VCV / PCV' },
   protocols: { title: 'Protocolos Clínicos UTI', subtitle: 'Módulo 2 · Decisão Clínica', tag: 'SDRA · Desmame' },
   tools: { title: 'Fisio Tools', subtitle: 'Módulo 3 · Calculadoras', tag: '15 Ferramentas' },
+  history: { title: 'Histórico de Cálculos', subtitle: 'Nuvem · Sincronizado', tag: 'Supabase' },
 };
 
 export default function App() {
@@ -30,6 +32,7 @@ export default function App() {
         {currentPage === 'simulator' && <SimulatorPage />}
         {currentPage === 'protocols' && <ProtocolsPage />}
         {currentPage === 'tools' && <ToolsPage />}
+        {currentPage === 'history' && <HistoryPage />}
       </main>
     </div>
   );

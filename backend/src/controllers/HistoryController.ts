@@ -18,7 +18,8 @@ export class HistoryController {
         const { deviceKey, limit } = req.query;
         if (!deviceKey) return reply.code(400).send({ error: 'deviceKey é obrigatório' });
 
-        const { history, total } = await HistoryService.listByDevice(deviceKey, Number(limit));
+        const limitValue = limit ? parseInt(limit, 10) : 50;
+        const { history, total } = await HistoryService.listByDevice(deviceKey, limitValue);
         return reply.send({ data: history, total });
     }
 
@@ -45,6 +46,18 @@ export class HistoryController {
             return reply.send({ deleted });
         } catch {
             return reply.code(404).send({ error: 'Dispositivo não encontrado' });
+        }
+    }
+
+    static async deleteById(req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+        const { id } = req.params;
+        if (!id) return reply.code(400).send({ error: 'ID é obrigatório' });
+
+        try {
+            await HistoryService.deleteById(id);
+            return reply.code(204).send();
+        } catch {
+            return reply.code(404).send({ error: 'Registro não encontrado' });
         }
     }
 }

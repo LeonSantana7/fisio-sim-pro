@@ -11,6 +11,7 @@ import { historyRoutes } from './routes/history.js';
 import { prisma } from './lib/prisma.js';
 
 const app = Fastify({
+    ignoreTrailingSlash: true,
     logger: {
         level: process.env.NODE_ENV === 'development' ? 'info' : 'warn',
         transport: process.env.NODE_ENV === 'development'

@@ -7,9 +7,10 @@ interface SidebarProps {
 
 const navItems = [
     { id: 'home', icon: Home, label: 'Início', badge: null },
-    { id: 'simulator', icon: Wind, label: 'Simulador VM', badge: 'Mod. 1' },
+    { id: 'simulator', icon: Wind, label: 'Simulador VM', badge: 'Beta' },
     { id: 'protocols', icon: Brain, label: 'Protocolos UTI', badge: 'Mod. 2' },
     { id: 'tools', icon: Calculator, label: 'Fisio Tools', badge: 'Mod. 3' },
+    { id: 'history', icon: Activity, label: 'Histórico', badge: 'Sync' },
 ];
 
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {

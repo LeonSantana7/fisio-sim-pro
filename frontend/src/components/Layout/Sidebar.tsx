@@ -83,7 +83,7 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
                             <span>Engine Física</span><span style={{ color: '#4ade80' }}>● Online</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Ferramentas</span><span style={{ color: '#4ade80' }}>● 15 ativas</span>
+                            <span>Ferramentas</span><span style={{ color: '#4ade80' }}>● 20 ativas</span>
                         </div>
                     </div>
                 </div>
@@ -92,7 +92,7 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
                     <div style={{ marginTop: 16 }}>
                         <strong style={{ color: '#94a3b8' }}>FisioSim</strong> v0.1.0
                     </div>
-                    <div>AMIB · ARDSNet · ERS 2013</div>
+                    <div>AMIB · ARDSNet · ERS 2007</div>
                 </div>
             </aside>
 

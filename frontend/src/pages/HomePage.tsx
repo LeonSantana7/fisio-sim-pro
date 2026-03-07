@@ -1,10 +1,29 @@
-import { Wind, Brain, ArrowRight, Activity, Shield, Zap, Calculator } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Wind, Brain, ArrowRight, Activity, Shield, Zap, Calculator, History, Clock, Star } from 'lucide-react';
+import { useDevice } from '../hooks/useDevice';
+import { historyService } from '../services/api';
 
 interface HomePageProps {
     onNavigate: (page: string) => void;
 }
 
 export default function HomePage({ onNavigate }: HomePageProps) {
+    const { deviceKey } = useDevice();
+    const [recentHistory, setRecentHistory] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!deviceKey) return;
+        const loadRecent = async () => {
+            try {
+                const { data } = await historyService.list(deviceKey);
+                setRecentHistory(data?.slice(0, 3) || []);
+            } catch (err) {
+                console.error('Error loading home history', err);
+            }
+        };
+        loadRecent();
+    }, [deviceKey]);
+
     return (
         <div>
             <div className="home-hero">
@@ -69,7 +88,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     <div className="module-card__tag">Calculadoras</div>
                     <div className="module-card__title">Fisio Tools</div>
                     <p className="module-card__desc">
-                        21 calculadoras e escalas clínicas interativas. Insira os dados do paciente
+                        20 calculadoras e escalas clínicas interativas. Insira os dados do paciente
                         e obtenha o resultado instantaneamente.
                     </p>
                     <div className="module-card__features">
@@ -84,12 +103,41 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         <Calculator size={16} /> Abrir Ferramentas <ArrowRight size={14} />
                     </div>
                 </div>
+
+                {/* Módulo 4: Histórico */}
+                <div className="module-card orange" onClick={() => onNavigate('history')}>
+                    <div className="module-card__icon">🕒</div>
+                    <div className="module-card__tag" style={{ background: 'rgba(249,115,22,0.15)', color: '#fdba74' }}>Histórico</div>
+                    <div className="module-card__title">Cálculos Recentes</div>
+                    <p className="module-card__desc">
+                        Acesse rapidamente seus últimos cálculos sincronizados em tempo real.
+                    </p>
+                    <div className="module-card__history-preview" style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {recentHistory.length > 0 ? (
+                            recentHistory.map((h, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: '0.72rem' }}>
+                                    {h.toolType === 'scale' ? <Star size={12} color="#facc15" /> : <Calculator size={12} color="#38bdf8" />}
+                                    <span style={{ flex: 1, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.toolId.replace('_', ' ').toUpperCase()}</span>
+                                    <span style={{ color: '#4ade80', fontWeight: 700 }}>{h.resultValue}{h.resultUnit}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ padding: '12px', textAlign: 'center', color: '#64748b', fontSize: '0.72rem', border: '1px dashed rgba(56,189,248,0.1)', borderRadius: 8 }}>
+                                <Clock size={14} style={{ marginBottom: 4, opacity: 0.5 }} />
+                                <div>Nenhum cálculo recente</div>
+                            </div>
+                        )}
+                    </div>
+                    <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 6, color: '#fdba74', fontSize: '0.82rem', fontWeight: 700 }}>
+                        <History size={16} /> Ver Histórico Completo <ArrowRight size={14} />
+                    </div>
+                </div>
             </div>
 
             <div className="technology-bar">
                 {[
-                    { value: '21', label: 'Ferramentas' },
-                    { value: '25+', label: 'Fontes DOI' },
+                    { value: '20', label: 'Ferramentas' },
+                    { value: '20+', label: 'Fontes DOI' },
                     { value: '1A', label: 'Evidência' },
                 ].map(t => (
                     <div key={t.label} className="tech-item">

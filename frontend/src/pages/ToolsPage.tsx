@@ -355,6 +355,12 @@ export default function ToolsPage() {
     const [toast, setToast] = useState<string | null>(null);
 
     useEffect(() => {
+        const main = document.querySelector('.main-content');
+        if (main) main.scrollTop = 0;
+        window.scrollTo(0, 0);
+    }, [filterCat, search]);
+
+    useEffect(() => {
         if (!deviceKey) return;
         const loadFavs = async () => {
             try {

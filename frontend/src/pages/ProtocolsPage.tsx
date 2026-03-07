@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, ChevronRight, AlertTriangle, ExternalLink, FileText, Star } from 'lucide-react';
 import { protocols } from '../data/protocols';
 import type { ClinicalProtocol } from '../data/protocols';
@@ -6,6 +6,12 @@ import type { ClinicalProtocol } from '../data/protocols';
 export default function ProtocolsPage() {
     const [activeId, setActiveId] = useState('sdra');
     const [activeTab, setActiveTab] = useState<'criteria' | 'flow' | 'targets' | 'sources'>('criteria');
+
+    useEffect(() => {
+        const main = document.querySelector('.main-content');
+        if (main) main.scrollTop = 0;
+        window.scrollTo(0, 0);
+    }, [activeId]);
 
     const protocol = protocols.find(p => p.id === activeId) as ClinicalProtocol;
 

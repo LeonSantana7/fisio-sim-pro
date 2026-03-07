@@ -304,6 +304,45 @@
     box-shadow: var(--shadow-lg), 0 0 24px rgba(167, 139, 250, 0.15);
 }
 
+/* ─── MODULE CARD ORANGE ─────────────────────────────────────── */
+.module-card.orange::before {
+    background: linear-gradient(90deg, #fb923c, #f97316);
+}
+
+.module-card.orange .module-card__icon {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(249, 115, 22, 0.1));
+    box-shadow: 0 0 24px rgba(251, 146, 60, 0.2);
+}
+
+.module-card.orange .module-card__tag {
+    background: rgba(249, 115, 22, 0.15);
+    color: #fdba74;
+}
+
+.module-card.orange .module-card__feat-dot {
+    background: #fb923c;
+}
+
+.module-card.orange:hover {
+    box-shadow: var(--shadow-lg), 0 0 24px rgba(251, 146, 60, 0.15);
+}
+
+.module-card__history-preview {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ─── MOBILE-FIRST BREAKPOINTS ───────────────────────────────── */
 @media (max-width: 639px) {
     :root {

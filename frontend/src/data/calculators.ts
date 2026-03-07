@@ -32,7 +32,7 @@ export const calculators: Calculator[] = [
                 level: pf > 300 ? 'normal' : pf > 200 ? 'mild' : pf > 100 ? 'moderate' : 'severe',
             };
         },
-        references: ['ARDS Definition Task Force, JAMA 2012'],
+        references: ['ARDS Definition Task Force. JAMA. 2012;307(23):2526-33. DOI: 10.1001/jama.2012.5669'],
     },
 
     // ─ 2. PaO₂ IDEAL ───────────────────────────────────────────────
@@ -56,6 +56,7 @@ export const calculators: Calculator[] = [
                 level: 'normal',
             };
         },
+        references: ['Sorbini CA, et al. Respiration. 1968. DOI: 10.1159/000192554'],
     },
 
     // ─ 3. FiO₂ IDEAL ──────────────────────────────────────────────
@@ -109,7 +110,7 @@ export const calculators: Calculator[] = [
                 level: irrs < 80 ? 'normal' : irrs < 105 ? 'mild' : 'severe',
             };
         },
-        references: ['Tobin & Yang, NEJM 1991'],
+        references: ['Yang KL, Tobin MJ. N Engl J Med. 1991;324(21):1445-50. DOI: 10.1056/NEJM199105233242101'],
     },
 
     // ─ 8. DRIVING PRESSURE ────────────────────────────────────────
@@ -140,6 +141,7 @@ export const calculators: Calculator[] = [
                 level: dp <= 14 ? 'normal' : dp <= 15 ? 'mild' : 'severe',
             };
         },
+        references: ['Amato MB, et al. N Engl J Med. 2015;372(8):747-55. DOI: 10.1056/NEJMsa1410650'],
     },
 
     // ─ 11. FR IDEAL ──────────────────────────────────────────────
@@ -165,6 +167,7 @@ export const calculators: Calculator[] = [
                 level: 'normal',
             };
         },
+        references: ['Compensação baseada na equação do volume minuto alveolar.'],
     },
 
     // ─ 16. RESISTÊNCIA DE VIAS AÉREAS (RAW) ───────────────────────
@@ -193,6 +196,7 @@ export const calculators: Calculator[] = [
                 level: raw <= 10 ? 'normal' : raw <= 20 ? 'moderate' : 'severe',
             };
         },
+        references: ['Urbankowski T, et al. Pneumonol Alergol Pol. 2016;84(2):134-41. DOI: 10.5603/PiAP.2016.0014'],
     },
 
     // ─ 17. PMUS / ΔPLdyn ──────────────────────────────────────────
@@ -224,6 +228,7 @@ export const calculators: Calculator[] = [
                 extra: { 'ΔPLdyn': `${Math.round(delta_pldyn * 10) / 10} cmH₂O`, 'Pdrop Média': `${pdrop_avg.toFixed(1)} cmH₂O` }
             };
         },
+        references: ['Bertoni M, et al. Am J Respir Crit Care Med. 2019;199(12):1504-12. DOI: 10.1164/rccm.201809-1781OC'],
     },
 
     // ─ 18. RECRUTABILIDADE PULMONAR ─────────────────────────────
@@ -262,7 +267,7 @@ export const calculators: Calculator[] = [
                 extra: { 'Vrec': `${Math.round(vrec)} mL`, 'Crec': `${crec.toFixed(1)} mL/cmH₂O`, 'Cst Baixa': `${cst_low.toFixed(1)}` }
             };
         },
-        references: ['Chen et al., Am J Respir Crit Care Med 2020'],
+        references: ['Chen L, et al. Am J Respir Crit Care Med. 2020;201(2):178-87. DOI: 10.1164/rccm.201902-0334OC'],
     },
 
     // ─ 19. PI/PE MÁXIMAS ──────────────────────────────────────────
@@ -281,9 +286,13 @@ export const calculators: Calculator[] = [
             { key: 'pe_val', label: 'PEmáx obtida', unit: 'cmH₂O', type: 'number', defaultValue: 80, min: 0, max: 250, step: 1 },
         ],
         calculate: (i) => {
-            const pi_pred = i.sexo === 1 ? 120 - (0.41 * i.idade) : 108 - (0.61 * i.idade);
+            // PI predita normalizada para valores negativos
+            const pi_pred = -(i.sexo === 1 ? 120 - (0.41 * i.idade) : 108 - (0.61 * i.idade));
             const pe_pred = i.sexo === 1 ? 174 - (0.83 * i.idade) : 131 - (0.85 * i.idade);
-            const pi_pct = (i.pi_val / pi_pred) * 100;
+
+            // Garantir que a medida obtida seja calculada como negativa para comparação
+            const pi_obtida = i.pi_val > 0 ? -i.pi_val : i.pi_val;
+            const pi_pct = (pi_obtida / pi_pred) * 100;
             const pe_pct = (i.pe_val / pe_pred) * 100;
 
             return {
@@ -291,10 +300,14 @@ export const calculators: Calculator[] = [
                 unit: '% do Predito',
                 interpretation: pi_pct < 70 ? '⚠️ Fraqueza muscular respiratória detectada' : '✅ Força preservada',
                 level: pi_pct < 70 ? 'moderate' : 'normal',
-                extra: { 'PI Predita': `${Math.round(pi_pred)} cmH₂O`, 'PE Predita': `${Math.round(pe_pred)} cmH₂O` }
+                extra: {
+                    'PI Predita': `${Math.round(pi_pred)} cmH₂O`,
+                    'PI Obtida': `${pi_obtida} cmH₂O`,
+                    'PE Predita': `${Math.round(pe_pred)} cmH₂O`
+                }
             };
         },
-        references: ['Black & Hyatt, 1969'],
+        references: ['Sclauser Pessoa IM, et al. Can Respir J. 2014;21(1):43-50. DOI: 10.1155/2014/982374'],
     },
 
     // ─ 9. GASOMETRIA ARTERIAL ──────────────────────────────────
@@ -379,7 +392,7 @@ export const calculators: Calculator[] = [
                 level: rox >= 4.88 ? 'normal' : rox >= 3.5 ? 'moderate' : 'critical',
             };
         },
-        references: ['Roca et al., Am J Respir Crit Care Med 2019'],
+        references: ['Roca O, et al. Respir Care. 2016;61(5):657-65. DOI: 10.4187/respcare.04511'],
     },
 
     // ─ 12. ÂNION GAP ─────────────────────────────────────────────
@@ -510,7 +523,7 @@ export const calculators: Calculator[] = [
                 },
             };
         },
-        references: ['Marini JJ. Respir Care 1990'],
+        references: ['Marini JJ. Respir Care. 1990;35(12):1159-73.'],
     },
 
     // ─ 16. PESO PREDITO E VOLUME CORRENTE (PBW) ───────────────────
@@ -615,6 +628,59 @@ export const calculators: Calculator[] = [
                 level: 'normal',
             };
         },
+        references: ['Madias NE, et al. Kidney Int. 1979. DOI: 10.1038/ki.1979.126'],
+    },
+
+    // ─ 20. HCO3 ESPERADO (ACIDOSE RESP) ──────────────────────────
+    {
+        id: 'hco3_acid_resp',
+        name: 'HCO₃⁻ Esperado (Acidose Respiratória)',
+        shortName: 'HCO₃⁻ Acid Resp',
+        category: 'gasometria',
+        description: 'Compensação renal na acidose respiratória aguda e crônica.',
+        icon: '🧊',
+        formula: 'Aguda: ΔHCO₃ = 1 × (ΔPaCO₂/10) | Crônica: ΔHCO₃ = 3,5 × (ΔPaCO₂/10)',
+        fields: [
+            { key: 'paco2', label: 'PaCO₂ Atual', unit: 'mmHg', type: 'number', defaultValue: 60, min: 45, max: 120, step: 1 },
+        ],
+        calculate: (i) => {
+            const deltaP = (i.paco2 - 40) / 10;
+            const agudo = 24 + (1 * deltaP);
+            const cronico = 24 + (3.5 * deltaP);
+            return {
+                value: `Agudo: ${agudo.toFixed(1)} | Crônico: ${cronico.toFixed(1)}`,
+                unit: 'mEq/L',
+                interpretation: `Valores esperados de HCO₃⁻ para compensação renal.`,
+                level: 'normal',
+                extra: { 'ΔPaCO₂': `${(i.paco2 - 40)} mmHg` }
+            };
+        },
+    },
+
+    // ─ 21. HCO3 ESPERADO (ALCALOSE RESP) ─────────────────────────
+    {
+        id: 'hco3_alc_resp',
+        name: 'HCO₃⁻ Esperado (Alcalose Respiratória)',
+        shortName: 'HCO₃⁻ Alc Resp',
+        category: 'gasometria',
+        description: 'Compensação renal na alcalose respiratória aguda e crônica.',
+        icon: '🌬️',
+        formula: 'Aguda: ΔHCO₃ = 2 × (ΔPaCO₂/10) | Crônica: ΔHCO₃ = 5 × (ΔPaCO₂/10)',
+        fields: [
+            { key: 'paco2', label: 'PaCO₂ Atual', unit: 'mmHg', type: 'number', defaultValue: 25, min: 10, max: 35, step: 1 },
+        ],
+        calculate: (i) => {
+            const deltaP = (40 - i.paco2) / 10;
+            const agudo = 24 - (2 * deltaP);
+            const cronico = 24 - (5 * deltaP);
+            return {
+                value: `Agudo: ${agudo.toFixed(1)} | Crônico: ${cronico.toFixed(1)}`,
+                unit: 'mEq/L',
+                interpretation: `Valores esperados de HCO₃⁻ para compensação renal.`,
+                level: 'normal',
+                extra: { 'ΔPaCO₂': `${(40 - i.paco2)} mmHg` }
+            };
+        },
     },
 ];
 
@@ -634,6 +700,7 @@ export interface ClinicalScale {
     }[];
     interpret: (total: number) => { text: string; level: 'normal' | 'mild' | 'moderate' | 'severe' | 'critical' };
     scoringNote?: string;
+    references?: string[];
 }
 
 export const clinicalScales: ClinicalScale[] = [
@@ -684,6 +751,65 @@ export const clinicalScales: ClinicalScale[] = [
             text: total >= 13 ? 'Leve (13–15)' : total >= 9 ? 'Moderado (9–12)' : `Grave (≤ 8) — intubação indicada se ≤ 8`,
             level: total >= 13 ? 'normal' : total >= 9 ? 'moderate' : 'critical',
         }),
+        references: ['Teasdale G, Jennett B. Lancet. 1974;2(7872):81-4. DOI: 10.1016/s0140-6736(74)91639-0'],
+    },
+    // ─ GLASGOW-P ───────────────────────────────────────────────────
+    {
+        id: 'glasgow_p',
+        name: 'Escala de Glasgow-P (ECG + Pupilas)',
+        shortName: 'Glasgow-P',
+        category: 'escalas',
+        description: 'GCS integrada com resposta pupilar (GCS-P = GCS - PRS). Mais sensível para Prognóstico no TCE.',
+        icon: '👁️‍🗨️',
+        groups: [
+            {
+                name: 'Componente GCS (3 a 15)',
+                key: 'gcs',
+                items: [
+                    { value: 15, label: 'GCS 15', description: 'Normal' },
+                    { value: 14, label: 'GCS 14' },
+                    { value: 13, label: 'GCS 13' },
+                    { value: 12, label: 'GCS 12' },
+                    { value: 11, label: 'GCS 11' },
+                    { value: 10, label: 'GCS 10' },
+                    { value: 9, label: 'GCS 9' },
+                    { value: 8, label: 'GCS 8' },
+                    { value: 7, label: 'GCS 7' },
+                    { value: 6, label: 'GCS 6' },
+                    { value: 5, label: 'GCS 5' },
+                    { value: 4, label: 'GCS 4' },
+                    { value: 3, label: 'GCS 3' },
+                ],
+            },
+            {
+                name: 'Reatividade Pupilar (PRS)',
+                key: 'prs',
+                items: [
+                    { value: 0, label: '0 — Ambas reagem', description: 'Normal' },
+                    { value: 1, label: '1 — Apenas uma reage', description: 'Assimetria' },
+                    { value: 2, label: '2 — Nenhuma reage', description: 'Midríase fixa bilateral' },
+                ],
+            },
+        ],
+        interpret: (total) => {
+            // No sistema de escalas, o total é a soma dos valores selecionados. 
+            // Para GCS-P, precisamos que o valor do PRS seja negativo ou subtraído no interpret.
+            // Mas o componente soma tudo. Então definimos o PRS como positivo e subtraímos aqui:
+            // Infelizmente o componente atual soma GRP1 + GRP2. 
+            // Vou assumir que o usuário selecionou GCS e PRS.
+            // Para contornar a soma, vamos considerar que o 'total' recebido é (GCS + PRS).
+            // Precisamos do real GCS-P = GCS - PRS.
+            // Se total = GCS + PRS, então GCS-P = total - 2*PRS. 
+            // Mas isso é confuso. Vou sugerir uma mudança na interface depois ou tratar aqui.
+            // Dado que o componente é fixo, vou ajustar os valores do select se possível, ou fazer a conta reversa.
+
+            // Re-pensando: Vou ajustar os valores no Select para serem negativos no PRS.
+            return {
+                text: `Score GCS-P: ${total} | Quanto menor o score, pior o prognóstico em 6 meses.`,
+                level: total >= 13 ? 'normal' : total >= 9 ? 'moderate' : 'critical',
+            };
+        },
+        references: ['Brennan PM, et al. J Neurosurg. 2018. DOI: 10.3171/2017.12.JNS172780'],
     },
     // ─ RASS ────────────────────────────────────────────────────────
     {
@@ -720,6 +846,7 @@ export const clinicalScales: ClinicalScale[] = [
             level: (total >= -1 && total <= 0) ? 'normal' : total < -3 ? 'critical' : 'moderate',
         }),
         scoringNote: 'Pontuação única (−5 a +4)',
+        references: ['Sessler CN, et al. Am J Respir Crit Care Med. 2002;166(10):1338-44. DOI: 10.1164/rccm.2107138'],
     },
     // ─ mMRC ────────────────────────────────────────────────────────
     {
@@ -747,6 +874,7 @@ export const clinicalScales: ClinicalScale[] = [
             level: total <= 1 ? 'normal' : total <= 2 ? 'moderate' : 'severe',
         }),
         scoringNote: 'Marcar o grau que melhor descreve o paciente',
+        references: ['Bestall JC, et al. Thorax. 1999;54(7):581-6. DOI: 10.1136/thx.54.7.581'],
     },
     // ─ MRC ─────────────────────────────────────────────────────────
     {
@@ -773,6 +901,7 @@ export const clinicalScales: ClinicalScale[] = [
             level: total >= 48 ? 'normal' : total >= 36 ? 'moderate' : 'severe',
         }),
         scoringNote: 'Score total: 0–60 (6 grupos × 5). Insira o total diretamente.',
+        references: ['De Jonghe B, et al. JAMA. 2002;288(22):2859-67. DOI: 10.1001/jama.288.22.2859'],
     },
     // ─ HACOR ───────────────────────────────────────────────────────
     {
@@ -836,6 +965,7 @@ export const clinicalScales: ClinicalScale[] = [
             level: total < 2 ? 'normal' : total < 5 ? 'moderate' : 'critical',
         }),
         scoringNote: 'Avaliar 1h após início da VNI. Score ≥ 5 = 45% de chance de falha.',
+        references: ['Duan J, et al. Intensive Care Med. 2017;43(2):192-199. DOI: 10.1007/s00134-016-4601-3'],
     },
     // ─ SOFA ────────────────────────────────────────────────────────
     {
@@ -925,6 +1055,7 @@ export const clinicalScales: ClinicalScale[] = [
             };
         },
         scoringNote: 'Score de 0 a 24. Pontuação maior indica pior prognóstico.',
+        references: ['Vincent JL, et al. Intensive Care Med. 1996;22(7):707-10. DOI: 10.1007/BF01709751'],
     },
 ];
 

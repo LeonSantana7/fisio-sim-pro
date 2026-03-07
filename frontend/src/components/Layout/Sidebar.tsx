@@ -7,9 +7,9 @@ interface SidebarProps {
 
 const navItems = [
     { id: 'home', icon: Home, label: 'Início', badge: null },
-    { id: 'simulator', icon: Wind, label: 'Simulador VM', badge: 'Beta' },
-    { id: 'protocols', icon: Brain, label: 'Protocolos UTI', badge: 'Mod. 2' },
-    { id: 'tools', icon: Calculator, label: 'Fisio Tools', badge: 'Mod. 3' },
+    { id: 'simulator', icon: Wind, label: 'Simulador VM', badge: null },
+    { id: 'protocols', icon: Brain, label: 'Protocolos UTI', badge: null },
+    { id: 'tools', icon: Calculator, label: 'Fisio Tools', badge: null },
     { id: 'history', icon: Activity, label: 'Histórico', badge: 'Sync' },
 ];
 
@@ -36,7 +36,7 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
                             <Stethoscope size={20} color="#fff" />
                         </div>
                         <div>
-                            <div className="sidebar__logo-title">FisioSim Pro</div>
+                            <div className="sidebar__logo-title">FisioSim</div>
                             <div className="sidebar__logo-sub">Fisioterapia Intensivista</div>
                         </div>
                     </div>
@@ -90,7 +90,7 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
 
                 <div className="sidebar__footer">
                     <div style={{ marginTop: 16 }}>
-                        <strong style={{ color: '#94a3b8' }}>FisioSim Pro</strong> v0.1.0
+                        <strong style={{ color: '#94a3b8' }}>FisioSim</strong> v0.1.0
                     </div>
                     <div>AMIB · ARDSNet · ERS 2013</div>
                 </div>

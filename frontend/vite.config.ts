@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'FisioSim Pro',
+        name: 'FisioSim',
         short_name: 'FisioSim',
         description: 'Plataforma de Fisioterapia Intensivista — Calculadoras, Protocolos e Simulador de VM',
         theme_color: '#0a0f1a',

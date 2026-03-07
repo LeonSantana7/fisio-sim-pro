@@ -12,7 +12,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     <Activity size={14} />
                     Fisioterapia Intensivista
                 </div>
-                <h1 className="home-hero__title">FisioSim Pro</h1>
+                <h1 className="home-hero__title">FisioSim</h1>
                 <p className="home-hero__sub">
                     Plataforma clínica unificada para fisioterapeutas. Simulação física de ventilação,
                     protocolos em UTI e calculadoras interativas — tudo com evidência nível A.
@@ -23,7 +23,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 {/* Módulo 1: Simulador */}
                 <div className="module-card blue" onClick={() => onNavigate('simulator')}>
                     <div className="module-card__icon">🫁</div>
-                    <div className="module-card__tag">Módulo 1 · Simulação</div>
+                    <div className="module-card__tag">Simulação</div>
                     <div className="module-card__title">Simulador de Ventilação Mecânica</div>
                     <p className="module-card__desc">
                         Motor físico completo baseado na Equação do Movimento. Gráficos em tempo real
@@ -45,7 +45,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 {/* Módulo 2: Protocolos */}
                 <div className="module-card teal" onClick={() => onNavigate('protocols')}>
                     <div className="module-card__icon">🧠</div>
-                    <div className="module-card__tag" style={{ background: 'rgba(6,182,212,0.15)', color: '#67e8f9', width: 'fit-content', padding: '2px 8px', borderRadius: '4px' }}>Módulo 2 · Protocolos</div>
+                    <div className="module-card__tag" style={{ background: 'rgba(6,182,212,0.15)', color: '#67e8f9', width: 'fit-content', padding: '2px 8px', borderRadius: '4px' }}>Protocolos</div>
                     <div className="module-card__title">Protocolos e Decisão Clínica</div>
                     <p className="module-card__desc">
                         SDRA e Desmame Ventilatório com critérios diagnósticos e algoritmo passo a passo.
@@ -66,7 +66,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 {/* Módulo 3: Fisio Tools */}
                 <div className="module-card purple" onClick={() => onNavigate('tools')}>
                     <div className="module-card__icon">🧮</div>
-                    <div className="module-card__tag">Módulo 3 · Calculadoras</div>
+                    <div className="module-card__tag">Calculadoras</div>
                     <div className="module-card__title">Fisio Tools</div>
                     <p className="module-card__desc">
                         15 calculadoras e escalas clínicas interativas. Insira os dados do paciente
@@ -88,7 +88,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
             <div className="technology-bar">
                 {[
-                    { value: '3', label: 'Módulos' },
                     { value: '15', label: 'Ferramentas' },
                     { value: '11', label: 'Fontes DOI' },
                     { value: '1A', label: 'Evidência' },

@@ -194,9 +194,10 @@ export const protocols: ClinicalProtocol[] = [
             { id: 'tp4', name: 'Frequência Cardíaca', thresholdMax: 130, unit: 'bpm', alertLevel: 'red', description: 'Evitar taquicardia excessiva durante mobilização ativa' },
         ],
         sources: [
-            { id: 's1', authors: 'Hodgson CL et al.', year: 2014, title: 'Expert consensus and recommendations on safety criteria for active mobilization of mechanically ventilated critically ill adults', journal: 'Critical Care', type: 'consensus' },
+            { id: 's1', authors: 'Hodgson CL et al.', year: 2014, title: 'Expert consensus and recommendations on safety criteria for active mobilization of mechanically ventilated critically ill adults', journal: 'Critical Care', type: 'guideline' },
             { id: 's2', authors: 'Schaller SJ et al.', year: 2016, title: 'Early, goal-directed mobilisation in the surgical intensive care unit', journal: 'The Lancet', type: 'rct' },
             { id: 's3', authors: 'Schweickert WD et al.', year: 2009, title: 'Early physical and occupational therapy in mechanically ventilated, critically ill patients', journal: 'The Lancet', type: 'rct' },
+            { id: 's4', authors: 'AMIB / ASSOBRAFIR', year: 2020, title: 'Recomendações Brasileiras de Mobilização Precoce em UTI', journal: 'Revista Brasileira de Terapia Intensiva', type: 'guideline' },
         ],
     },
 ];

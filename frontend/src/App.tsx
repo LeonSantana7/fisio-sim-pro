@@ -13,10 +13,10 @@ import HistoryPage from './pages/HistoryPage';
 export type Page = 'home' | 'simulator' | 'protocols' | 'tools' | 'history';
 
 const pageConfig: Record<Page, { title: string; subtitle: string; tag: string }> = {
-  home: { title: 'FisioSim Pro', subtitle: 'Fisioterapia Intensivista', tag: 'v0.1.0' },
-  simulator: { title: 'Simulador de Ventilação', subtitle: 'Módulo 1 · Motor Físico', tag: 'VCV / PCV' },
-  protocols: { title: 'Protocolos Clínicos UTI', subtitle: 'Módulo 2 · Decisão Clínica', tag: 'SDRA · Desmame' },
-  tools: { title: 'Fisio Tools', subtitle: 'Módulo 3 · Calculadoras', tag: '15 Ferramentas' },
+  home: { title: 'FisioSim', subtitle: 'Fisioterapia Intensivista', tag: 'v0.1.0' },
+  simulator: { title: 'Simulador de Ventilação', subtitle: 'Motor Físico', tag: 'VCV / PCV' },
+  protocols: { title: 'Protocolos Clínicos UTI', subtitle: 'Decisão Clínica', tag: 'SDRA · Desmame' },
+  tools: { title: 'Fisio Tools', subtitle: 'Calculadoras', tag: '15 Ferramentas' },
   history: { title: 'Histórico de Cálculos', subtitle: 'Nuvem · Sincronizado', tag: 'Supabase' },
 };
 
@@ -72,7 +72,20 @@ export default function App() {
     }
   }, []);
 
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    const saved = sessionStorage.getItem('fisiosim_page');
+    return (saved && Object.keys(pageConfig).includes(saved)) ? (saved as Page) : 'home';
+  });
+
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    sessionStorage.setItem('fisiosim_page', currentPage);
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [currentPage]);
+
   const cfg = pageConfig[currentPage];
   const navigate = (p: string) => setCurrentPage(p as Page);
 
@@ -80,7 +93,7 @@ export default function App() {
     <div className="app-layout">
       <Sidebar activePage={currentPage} onNavigate={navigate} />
       <TopBar title={cfg.title} subtitle={cfg.subtitle} tag={cfg.tag} />
-      <main className="main-content">
+      <main className="main-content" ref={mainRef}>
         {currentPage === 'home' && <HomePage onNavigate={navigate} />}
         {currentPage === 'simulator' && <SimulatorPage />}
         {currentPage === 'protocols' && <ProtocolsPage />}

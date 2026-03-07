@@ -10,7 +10,7 @@ import { historyService, favoriteService } from '../services/api';
 function CopyButton({ label, onCopy }: { label: string; onCopy?: () => void }) {
     const [copied, setCopied] = useState(false);
     const handleCopy = () => {
-        navigator.clipboard.writeText(`[FisioSim Pro] ${label}`);
+        navigator.clipboard.writeText(`[FisioSim] ${label}`);
         setCopied(true);
         if (onCopy) onCopy();
         setTimeout(() => setCopied(false), 2000);

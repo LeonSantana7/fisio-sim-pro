@@ -66,6 +66,117 @@
   --shadow-glow: 0 0 24px rgba(14, 165, 233, 0.2);
   --shadow-glow-red: 0 0 24px rgba(239, 68, 68, 0.25);
   --shadow-glow-yellow: 0 0 24px rgba(234, 179, 8, 0.25);
+
+  /* Acessibilidade Widget Theme */
+  --_access-menu-background-color: var(--bg-card);
+  --_access-menu-item-button-background: rgba(14, 165, 233, 0.08);
+  /* Fundo mais suave para contraste */
+  --_access-menu-item-color: #ffffff !important;
+  /* Branco para melhor leitura */
+  --_access-menu-header-color: #ffffff !important;
+  /* Título em branco para destacar */
+  --_access-menu-item-button-active-color: #ffffff;
+  --_access-menu-item-button-active-background-color: var(--primary-600);
+  --_access-menu-div-active-background-color: var(--primary-700) !important;
+  --_access-menu-item-button-hover-color: #ffffff !important;
+  --_access-menu-item-button-hover-background-color: var(--primary-600) !important;
+  --_access-menu-item-icon-color: var(--primary-400) !important;
+  --_access-menu-item-hover-icon-color: #ffffff !important;
+  --_access-menu-item-active-icon-color: #ffffff !important;
+
+  /* Força a posição do ícone da biblioteca para fora da tela caso exista */
+  --_access-icon-top: -9999px !important;
+  --_access-icon-left: -9999px !important;
+  --_access-icon-right: auto !important;
+  --_access-icon-bottom: auto !important;
+  --_access-icon-display: none !important;
+}
+
+/* Força as cores da acessibilidade a ficarem claras em telas escuras */
+.accessibility-menu ._access-menu {
+  color: #fff !important;
+}
+
+.accessibility-menu ._access-menu ul li {
+  color: #fff !important;
+  /* Texto sempre branco */
+  background: var(--bg-card) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.accessibility-menu ._access-menu ul li,
+.accessibility-menu ._access-menu ul li *,
+.accessibility-menu ._access-menu ul li button,
+.accessibility-menu ._access-menu ul li span {
+  color: #fff !important;
+  /* Garante que botões e spans internos fiquem brancos */
+}
+
+.accessibility-menu ._access-menu ul li:hover,
+.accessibility-menu ._access-menu ul li.active {
+  background: var(--primary-600) !important;
+  color: #fff !important;
+}
+
+.accessibility-menu ._access-menu ul li svg path {
+  fill: var(--primary-400) !important;
+}
+
+.accessibility-menu ._access-menu ul li:hover svg path,
+.accessibility-menu ._access-menu ul li.active svg path {
+  fill: #fff !important;
+}
+
+.access-icon,
+.accessibility-icon,
+._access-button,
+[class*="accessibility-icon"],
+[class*="access-button"],
+[class*="accessibility-btn"] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  z-index: -9999 !important;
+}
+
+/* Corrige o guia de leitura que ficava invisível atrás da tela */
+#access_read_guide_bar,
+.access_read_guide_bar {
+  z-index: 2147483647 !important;
+  /* Maior Z-index possível */
+  background: rgba(14, 165, 233, 0.15) !important;
+  border-top: 1px solid var(--primary-500) !important;
+  border-bottom: 1px solid var(--primary-500) !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-radius: 0 !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
+._access-button:hover {
+  transform: scale(1) !important;
+}
+
+._access-button svg,
+._access-button i,
+._access-button img {
+  border-radius: 50% !important;
+  object-fit: contain;
+  width: 18px !important;
+  height: 18px !important;
+  transition: all 0.3s ease !important;
+}
+
+._access-button:hover svg,
+._access-button:hover i,
+._access-button:hover img {
+  filter: brightness(0) invert(1) !important;
 }
 
 /* ─── RESET & BASE ───────────────────────────────────────────── */

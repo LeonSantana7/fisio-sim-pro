@@ -1,4 +1,4 @@
-import { Activity, Brain, Home, Wind, Calculator, Stethoscope } from 'lucide-react';
+import { Activity, Brain, Home, Wind, Calculator, Stethoscope, Accessibility } from 'lucide-react';
 
 interface SidebarProps {
     activePage: string;
@@ -14,6 +14,18 @@ const navItems = [
 ];
 
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
+    const toggleAccessibility = () => {
+        // @ts-ignore
+        if (window.accessibilityInstance && typeof window.accessibilityInstance.toggleMenu === 'function') {
+            // @ts-ignore
+            window.accessibilityInstance.toggleMenu();
+        } else {
+            // Fallback
+            const btn = document.querySelector('._access-button') as HTMLElement || document.querySelector('.accessibility-icon') as HTMLElement;
+            if (btn) btn.click();
+        }
+    };
+
     return (
         <>
             {/* ── SIDEBAR DESKTOP ── */}
@@ -50,6 +62,15 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
                             </button>
                         );
                     })}
+                    <button
+                        className="nav-item"
+                        onClick={toggleAccessibility}
+                        data-label="Acessibilidade"
+                        title="Acessibilidade"
+                    >
+                        <Accessibility className="nav-item__icon" size={18} />
+                        <span className="sidebar__nav-label">Acessibilidade</span>
+                    </button>
                 </nav>
 
                 <div className="sidebar__status" style={{ margin: '24px 12px 0', padding: '14px', background: 'rgba(14,165,233,0.06)', borderRadius: '12px', border: '1px solid rgba(56,189,248,0.15)' }}>
@@ -90,6 +111,12 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
                             </button>
                         );
                     })}
+                    <button className="bottom-nav__item" onClick={toggleAccessibility}>
+                        <div className="bn-icon">
+                            <Accessibility size={20} />
+                        </div>
+                        Acesso
+                    </button>
                 </div>
             </nav>
         </>

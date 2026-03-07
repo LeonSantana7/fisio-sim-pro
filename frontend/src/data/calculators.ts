@@ -41,20 +41,18 @@ export const calculators: Calculator[] = [
         name: 'PaO₂ Ideal / Esperada',
         shortName: 'PaO₂ Ideal',
         category: 'oxigenacao',
-        description: 'Estima a PaO₂ esperada com base no FiO₂ e na pressão barométrica local.',
+        description: 'Estima a PaO₂ esperada com base na idade (fórmula clássica).',
         icon: '💨',
-        formula: 'PaO₂ ideal = (Pb − 47) × FiO₂ − PaCO₂ / 0,8',
+        formula: 'PaO₂ ideal = 103,5 − (0,42 × idade)',
         fields: [
-            { key: 'fio2', label: 'FiO₂', unit: '%', type: 'number', defaultValue: 40, min: 21, max: 100, step: 1 },
-            { key: 'paco2', label: 'PaCO₂', unit: 'mmHg', type: 'number', defaultValue: 40, min: 10, max: 120, step: 1 },
-            { key: 'pb', label: 'Pressão barométrica', unit: 'mmHg', type: 'number', defaultValue: 760, min: 500, max: 800, step: 1, hint: 'Nível do mar ≈ 760 mmHg; São Paulo ≈ 706 mmHg' },
+            { key: 'idade', label: 'Idade', unit: 'anos', type: 'number', defaultValue: 50, min: 1, max: 110, step: 1 },
         ],
         calculate: (i) => {
-            const pao2_ideal = (i.pb - 47) * (i.fio2 / 100) - i.paco2 / 0.8;
+            const pao2_ideal = 103.5 - (0.42 * i.idade);
             return {
                 value: Math.round(pao2_ideal * 10) / 10,
                 unit: 'mmHg',
-                interpretation: `PaO₂ esperada para FiO₂ ${i.fio2}% a ${i.pb} mmHg barométrica.`,
+                interpretation: `PaO₂ fisiológica esperada para a idade de ${i.idade} anos.`,
                 level: 'normal',
             };
         },
@@ -63,87 +61,25 @@ export const calculators: Calculator[] = [
     // ─ 3. FiO₂ IDEAL ──────────────────────────────────────────────
     {
         id: 'fio2_ideal',
-        name: 'FiO₂ Ideal para meta SpO₂',
+        name: 'FiO₂ Ideal para meta PaO₂',
         shortName: 'FiO₂ Ideal',
         category: 'oxigenacao',
-        description: 'Estima o FiO₂ necessário para atingir uma PaO₂ alvo com base na relação P/F atual.',
+        description: 'Estima o FiO₂ necessário para atingir uma PaO₂ alvo.',
         icon: '🎯',
-        formula: 'FiO₂ alvo = PaO₂ alvo ÷ (P/F atual)',
+        formula: 'FiO₂ alvo = (FiO₂ atual × PaO₂ alvo) ÷ PaO₂ atual',
         fields: [
-            { key: 'pao2_atual', label: 'PaO₂ atual', unit: 'mmHg', type: 'number', defaultValue: 75, min: 20, max: 500, step: 1 },
-            { key: 'fio2_atual', label: 'FiO₂ atual', unit: '%', type: 'number', defaultValue: 50, min: 21, max: 100, step: 1 },
-            { key: 'pao2_alvo', label: 'PaO₂ alvo', unit: 'mmHg', type: 'number', defaultValue: 90, min: 50, max: 200, step: 1 },
+            { key: 'pao2_ideal', label: 'PaO₂ Alvo (Ideal)', unit: 'mmHg', type: 'number', defaultValue: 90, min: 50, max: 200, step: 1 },
+            { key: 'fio2_atual', label: 'FiO₂ Atual', unit: '%', type: 'number', defaultValue: 50, min: 21, max: 100, step: 1 },
+            { key: 'pao2_atual', label: 'PaO₂ Atual', unit: 'mmHg', type: 'number', defaultValue: 75, min: 20, max: 500, step: 1 },
         ],
         calculate: (i) => {
-            const pf = i.pao2_atual / (i.fio2_atual / 100);
-            const fio2_alvo_decimal = i.pao2_alvo / pf;
-            const fio2_pct = Math.min(100, Math.round(fio2_alvo_decimal * 100));
+            const fio2_alvo = (i.fio2_atual * i.pao2_ideal) / i.pao2_atual;
+            const fio2_pct = Math.min(100, Math.round(fio2_alvo));
             return {
                 value: fio2_pct,
                 unit: '%',
-                interpretation: `Para atingir PaO₂ ${i.pao2_alvo} mmHg, ajustar FiO₂ para ${fio2_pct}%. P/F atual: ${Math.round(pf)}.`,
+                interpretation: `Para atingir PaO₂ de ${i.pao2_ideal} mmHg, ajuste a FiO₂ para ${fio2_pct}%.`,
                 level: fio2_pct <= 60 ? 'normal' : fio2_pct <= 80 ? 'moderate' : 'severe',
-            };
-        },
-    },
-
-    // ─ 4. PESO PREDITO (PBW) ─────────────────────────────────────
-    {
-        id: 'pbw',
-        name: 'Peso Corporal Predito (PBW)',
-        shortName: 'Peso Predito',
-        category: 'ventilacao',
-        description: 'Base para cálculo do Volume Corrente em Ventilação Protetora (6 mL/kg PBW).',
-        icon: '⚖️',
-        formula: '♂ PBW = 50 + 0,91 × (altura − 152,4)\n♀ PBW = 45,5 + 0,91 × (altura − 152,4)',
-        fields: [
-            { key: 'altura', label: 'Altura', unit: 'cm', type: 'number', defaultValue: 170, min: 140, max: 220, step: 1 },
-            { key: 'sexo', label: 'Sexo', type: 'select', defaultValue: 1, options: [{ value: 1, label: '♂ Masculino' }, { value: 0, label: '♀ Feminino' }] },
-        ],
-        calculate: (i) => {
-            const pbw = i.sexo === 1
-                ? 50 + 0.91 * (i.altura - 152.4)
-                : 45.5 + 0.91 * (i.altura - 152.4);
-            const vt6 = Math.round(pbw * 6);
-            const vt8 = Math.round(pbw * 8);
-            return {
-                value: Math.round(pbw * 10) / 10,
-                unit: 'kg',
-                interpretation: `VT protetor (6 mL/kg): ${vt6} mL | Máximo (8 mL/kg): ${vt8} mL`,
-                level: 'normal',
-                extra: { 'VT 6 mL/kg': `${vt6} mL`, 'VT 8 mL/kg': `${vt8} mL` },
-            };
-        },
-        references: ['ARDSNet, NEJM 2000'],
-    },
-
-    // ─ 5. GRADIENTE ALVÉOLO-ARTERIAL ─────────────────────────────
-    {
-        id: 'gradiente_aa',
-        name: 'Gradiente Alvéolo-Arterial (A-a)',
-        shortName: 'Gradiente A-a O₂',
-        category: 'oxigenacao',
-        description: 'Diferença entre a pressão alveolar e arterial de O₂. Aumentado na SDRA, pneumonia, TEP.',
-        icon: '📐',
-        formula: 'PAO₂ = (Pb−47) × FiO₂ − PaCO₂/0,8\nGradiente A-a = PAO₂ − PaO₂',
-        fields: [
-            { key: 'pao2', label: 'PaO₂', unit: 'mmHg', type: 'number', defaultValue: 75, min: 20, max: 500, step: 1 },
-            { key: 'paco2', label: 'PaCO₂', unit: 'mmHg', type: 'number', defaultValue: 40, min: 10, max: 120, step: 1 },
-            { key: 'fio2', label: 'FiO₂', unit: '%', type: 'number', defaultValue: 21, min: 21, max: 100, step: 1 },
-            { key: 'pb', label: 'Pressão barométrica', unit: 'mmHg', type: 'number', defaultValue: 760, min: 500, max: 800, step: 1 },
-            { key: 'idade', label: 'Idade', unit: 'anos', type: 'number', defaultValue: 50, min: 18, max: 100, step: 1 },
-        ],
-        calculate: (i) => {
-            const pao2_alv = (i.pb - 47) * (i.fio2 / 100) - i.paco2 / 0.8;
-            const gradiente = pao2_alv - i.pao2;
-            const normal_esperado = 2.5 + (0.21 * i.idade);
-            const isAlterado = gradiente > normal_esperado;
-            return {
-                value: Math.round(gradiente * 10) / 10,
-                unit: 'mmHg',
-                interpretation: `${isAlterado ? '⚠️ Aumentado' : '✅ Normal'} para a idade. Normal esperado ≤ ${Math.round(normal_esperado)} mmHg (${i.idade} anos).`,
-                level: gradiente <= normal_esperado ? 'normal' : gradiente < 30 ? 'mild' : gradiente < 60 ? 'moderate' : 'severe',
-                extra: { 'PAO₂ alveolar': `${Math.round(pao2_alv)} mmHg`, 'Normal esperado': `≤ ${Math.round(normal_esperado)} mmHg` },
             };
         },
     },
@@ -152,13 +88,13 @@ export const calculators: Calculator[] = [
     {
         id: 'tobin',
         name: 'Índice de Tobin (IRRS)',
-        shortName: 'Índice de Tobin',
+        shortName: 'Tobin',
         category: 'desmame',
-        description: 'Índice de Respiração Rápida e Superficial. Preditor de sucesso/falha no desmame ventilatório.',
+        description: 'Índice de Respiração Rápida e Superficial. Preditor de sucesso no desmame.',
         icon: '📊',
         formula: 'IRRS = FR ÷ VT (em litros)',
         fields: [
-            { key: 'fr', label: 'Frequência Respiratória', unit: 'irpm', type: 'number', defaultValue: 20, min: 5, max: 60, step: 1 },
+            { key: 'fr', label: 'FR', unit: 'irpm', type: 'number', defaultValue: 20, min: 5, max: 60, step: 1 },
             { key: 'vt_ml', label: 'Volume Corrente', unit: 'mL', type: 'number', defaultValue: 400, min: 50, max: 1200, step: 10 },
         ],
         calculate: (i) => {
@@ -167,141 +103,253 @@ export const calculators: Calculator[] = [
                 value: Math.round(irrs * 10) / 10,
                 unit: 'irpm/L',
                 interpretation:
-                    irrs < 80 ? '✅ Sucesso provável no desmame (IRRS < 80)' :
-                        irrs < 105 ? '⚠️ Zona cinza — avaliar com cautela (80–105)' :
-                            '❌ Falha provável no desmame (IRRS ≥ 105)',
+                    irrs < 80 ? '✅ Sucesso provável no desmame' :
+                        irrs < 105 ? '⚠️ Zona cinza — avaliar com cautela' :
+                            '❌ Falha provável no desmame',
                 level: irrs < 80 ? 'normal' : irrs < 105 ? 'mild' : 'severe',
             };
         },
         references: ['Tobin & Yang, NEJM 1991'],
     },
 
-    // ─ 7. COMPLACÊNCIA ESTÁTICA ──────────────────────────────────
-    {
-        id: 'complacencia',
-        name: 'Complacência Estática (Cst)',
-        shortName: 'Complacência',
-        category: 'mecanica',
-        description: 'Mede a distensibilidade do sistema respiratório. Reduzida na SDRA.',
-        icon: '🔧',
-        formula: 'Cst = VT ÷ (P_plat − PEEP)',
-        fields: [
-            { key: 'vt_ml', label: 'Volume Corrente', unit: 'mL', type: 'number', defaultValue: 450, min: 100, max: 1000, step: 10 },
-            { key: 'p_plat', label: 'Pressão de Platô', unit: 'cmH₂O', type: 'number', defaultValue: 20, min: 5, max: 50, step: 1 },
-            { key: 'peep', label: 'PEEP', unit: 'cmH₂O', type: 'number', defaultValue: 5, min: 0, max: 20, step: 1 },
-        ],
-        calculate: (i) => {
-            const cst = i.vt_ml / (i.p_plat - i.peep);
-            const interp =
-                cst >= 60 ? '✅ Normal (≥ 60 mL/cmH₂O)' :
-                    cst >= 40 ? '⚠️ Levemente reduzida (40–60)' :
-                        cst >= 25 ? '⚠️ Moderadamente reduzida — atenção SDRA' :
-                            '❌ Gravemente reduzida (< 25) — SDRA grave';
-            return {
-                value: Math.round(cst * 10) / 10,
-                unit: 'mL/cmH₂O',
-                interpretation: interp,
-                level: cst >= 60 ? 'normal' : cst >= 40 ? 'mild' : cst >= 25 ? 'moderate' : 'severe',
-            };
-        },
-    },
-
     // ─ 8. DRIVING PRESSURE ────────────────────────────────────────
     {
         id: 'driving',
-        name: 'Driving Pressure (Pressão de Distensão)',
+        name: 'Driving Pressure',
         shortName: 'Driving Pressure',
         category: 'mecanica',
-        description: 'Pressão de distensão pulmonar. Associada independentemente à mortalidade na SDRA (Amato 2015).',
+        description: 'Pressão de distensão alveolar. Alvo < 15 cmH2O.',
         icon: '💥',
-        formula: 'ΔP = P_platô − PEEP',
+        formula: 'ΔP = P_platô − PEEP  OU  ΔP = VT ÷ Cst',
         fields: [
+            { key: 'calc_type', label: 'Método de Cálculo', type: 'select', defaultValue: 0, options: [{ value: 0, label: 'P. Platô - PEEP' }, { value: 1, label: 'Volume ÷ Complacência' }] },
             { key: 'p_plat', label: 'Pressão de Platô', unit: 'cmH₂O', type: 'number', defaultValue: 20, min: 5, max: 50, step: 1 },
-            { key: 'peep', label: 'PEEP', unit: 'cmH₂O', type: 'number', defaultValue: 5, min: 0, max: 20, step: 1 },
+            { key: 'peep', label: 'PEEP', unit: 'cmH₂O', type: 'number', defaultValue: 5, min: 0, max: 30, step: 1 },
+            { key: 'vt_ml', label: 'Vt (em ml)', unit: 'mL', type: 'number', defaultValue: 450, min: 50, max: 1200, step: 10 },
+            { key: 'cst', label: 'Cst (Complacência)', unit: 'mL/cmH₂O', type: 'number', defaultValue: 40, min: 5, max: 150, step: 1 },
         ],
         calculate: (i) => {
-            const dp = i.p_plat - i.peep;
+            const dp = i.calc_type === 0 ? (i.p_plat - i.peep) : (i.vt_ml / i.cst);
             return {
-                value: dp,
+                value: Math.round(dp * 10) / 10,
                 unit: 'cmH₂O',
                 interpretation:
-                    dp <= 13 ? '✅ Ótimo — baixo risco de dano (≤ 13 cmH₂O)' :
-                        dp <= 15 ? '🟡 Aceitável, próximo ao limite (13–15)' :
-                            '🔴 Elevado — associado a maior mortalidade em SDRA (> 15)',
-                level: dp <= 13 ? 'normal' : dp <= 15 ? 'mild' : 'severe',
+                    dp <= 14 ? '✅ Proteção pulmonar adequada' :
+                        dp <= 15 ? '🟡 No limite sugerido (15)' :
+                            '🔴 Elevada — risco de lesão pulmonar',
+                level: dp <= 14 ? 'normal' : dp <= 15 ? 'mild' : 'severe',
             };
         },
-        references: ['Amato et al., NEJM 2015'],
     },
 
-    // ─ 9. GASOMETRIA + ÂNION GAP ─────────────────────────────────
+    // ─ 11. FR IDEAL ──────────────────────────────────────────────
     {
-        id: 'gasometria',
-        name: 'Gasometria Arterial + Ânion Gap',
-        shortName: 'Gasometria',
-        category: 'gasometria',
-        description: 'Interpretação de pH, PaO₂, PaCO₂ e cálculo do Ânion Gap para SDRA e acidose metabólica.',
-        icon: '🩸',
-        formula: 'Ânion Gap = Na⁺ − (Cl⁻ + HCO₃⁻)',
+        id: 'fr_ideal',
+        name: 'Frequência Respiratória Ideal',
+        shortName: 'FR Ideal',
+        category: 'ventilacao',
+        description: 'Ajuste da FR para atingir meta de PaCO2.',
+        icon: '📈',
+        formula: 'FR alvo = (FR atual × PaCO₂ atual) ÷ PaCO₂ alvo',
         fields: [
-            { key: 'ph', label: 'pH', unit: '', type: 'number', defaultValue: 7.40, min: 6.8, max: 7.8, step: 0.01 },
-            { key: 'pao2', label: 'PaO₂', unit: 'mmHg', type: 'number', defaultValue: 90, min: 20, max: 600, step: 1 },
-            { key: 'paco2', label: 'PaCO₂', unit: 'mmHg', type: 'number', defaultValue: 40, min: 10, max: 120, step: 1 },
-            { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', type: 'number', defaultValue: 24, min: 5, max: 50, step: 0.5 },
-            { key: 'na', label: 'Na⁺', unit: 'mEq/L', type: 'number', defaultValue: 140, min: 110, max: 170, step: 1 },
-            { key: 'cl', label: 'Cl⁻', unit: 'mEq/L', type: 'number', defaultValue: 105, min: 80, max: 140, step: 1 },
+            { key: 'fr_atual', label: 'FR atual', unit: 'irpm', type: 'number', defaultValue: 20, min: 5, max: 60, step: 1 },
+            { key: 'paco2_atual', label: 'PaCO₂ Atual', unit: 'mmHg', type: 'number', defaultValue: 50, min: 10, max: 120, step: 1 },
+            { key: 'paco2_alvo', label: 'PaCO₂ Alvo', unit: 'mmHg', type: 'number', defaultValue: 40, min: 20, max: 60, step: 1 },
         ],
         calculate: (i) => {
-            const ag = i.na - (i.cl + i.hco3);
-            const phStatus = i.ph < 7.35 ? 'Acidemia' : i.ph > 7.45 ? 'Alcalemia' : 'Normal';
+            const fr_alvo = (i.fr_atual * i.paco2_atual) / i.paco2_alvo;
+            return {
+                value: Math.round(fr_alvo),
+                unit: 'irpm',
+                interpretation: `Para atingir PaCO₂ de ${i.paco2_alvo} mmHg, ajuste a FR para ${Math.round(fr_alvo)} irpm.`,
+                level: 'normal',
+            };
+        },
+    },
 
-            let disturbio = 'Normal';
+    // ─ 16. RESISTÊNCIA DE VIAS AÉREAS (RAW) ───────────────────────
+    {
+        id: 'raw',
+        name: 'Resistência de Vias Aéreas (Raw)',
+        shortName: 'Resistência Raw',
+        category: 'mecanica',
+        description: 'Oposição ao fluxo aéreo. Normal < 10 cmH2O/L/s em pacientes ventilados.',
+        icon: '💨',
+        formula: 'Raw = (P_pico − P_platô) ÷ Fluxo (L/s)',
+        fields: [
+            { key: 'p_pico', label: 'Pressão de Pico', unit: 'cmH₂O', type: 'number', defaultValue: 30, min: 5, max: 80, step: 1 },
+            { key: 'p_plat', label: 'Pressão de Platô', unit: 'cmH₂O', type: 'number', defaultValue: 20, min: 5, max: 60, step: 1 },
+            { key: 'fluxo', label: 'Fluxo', unit: 'L/seg', type: 'number', defaultValue: 1.0, min: 0.1, max: 3.0, step: 0.1, hint: 'Geralmente 1.0 L/s = 60 L/min' },
+        ],
+        calculate: (i) => {
+            const raw = (i.p_pico - i.p_plat) / i.fluxo;
+            return {
+                value: Math.round(raw * 10) / 10,
+                unit: 'cmH₂O/L/s',
+                interpretation:
+                    raw <= 10 ? '✅ Normal em ventilação mecânica (≤ 10)' :
+                        raw <= 20 ? '🟡 Aumento moderado — avaliar secreção/broncoespasmo' :
+                            '🔴 Resistência muito elevada',
+                level: raw <= 10 ? 'normal' : raw <= 20 ? 'moderate' : 'severe',
+            };
+        },
+    },
+
+    // ─ 17. PMUS / ΔPLdyn ──────────────────────────────────────────
+    {
+        id: 'pmus',
+        name: 'PMUS e ΔPLdyn',
+        shortName: 'PMUS / ΔPLdyn',
+        category: 'mecanica',
+        description: 'Estima esforço muscular e estresse pulmonar via pressão de oclusão.',
+        icon: '🫁',
+        formula: 'Pmus = 0,75 × (PEEP − Pdrop_média)\nΔPLdyn = (Ppico − PEEP) + 0,66 × (PEEP − Pdrop_média)',
+        fields: [
+            { key: 'pdrop1', label: 'Pdrop 1', unit: 'cmH₂O', type: 'number', defaultValue: 0, min: -30, max: 20, step: 0.1 },
+            { key: 'pdrop2', label: 'Pdrop 2', unit: 'cmH₂O', type: 'number', defaultValue: 0, min: -30, max: 20, step: 0.1 },
+            { key: 'pdrop3', label: 'Pdrop 3', unit: 'cmH₂O', type: 'number', defaultValue: 0, min: -30, max: 20, step: 0.1 },
+            { key: 'peep', label: 'PEEP', unit: 'cmH₂O', type: 'number', defaultValue: 5, min: 0, max: 25, step: 1 },
+            { key: 'p_pico', label: 'Ppico *', unit: 'cmH₂O', type: 'number', defaultValue: 20, min: 5, max: 60, step: 1, hint: 'Opcional. Preencha para calcular ΔPLdyn.' },
+        ],
+        calculate: (i) => {
+            const pdrop_avg = (i.pdrop1 + i.pdrop2 + i.pdrop3) / 3;
+            const pmus = 0.75 * (i.peep - pdrop_avg);
+            const delta_pldyn = (i.p_pico - i.peep) + (2 / 3) * (i.peep - pdrop_avg);
+
+            return {
+                value: Math.round(pmus * 10) / 10,
+                unit: 'cmH₂O (Pmus)',
+                interpretation: pmus > 15 ? '🔴 Alto esforço inspiratório' : pmus < 5 ? '🟡 Baixo esforço (risco atrofia)' : '✅ Esforço adequado',
+                level: pmus > 15 ? 'severe' : pmus < 5 ? 'mild' : 'normal',
+                extra: { 'ΔPLdyn': `${Math.round(delta_pldyn * 10) / 10} cmH₂O`, 'Pdrop Média': `${pdrop_avg.toFixed(1)} cmH₂O` }
+            };
+        },
+    },
+
+    // ─ 18. RECRUTABILIDADE PULMONAR ─────────────────────────────
+    {
+        id: 'recrutabilidade',
+        name: 'Recrutabilidade Pulmonar (R/I ratio)',
+        shortName: 'Recrutabilidade',
+        category: 'mecanica',
+        description: 'Cálculo da relação Recrutamento/Inflação (técnica de duas PEEPs).',
+        icon: '♻️',
+        formula: 'R/I = Crec ÷ Cst_baixo',
+        fields: [
+            { key: 'vt_def', label: 'Vt definido', unit: 'mL', type: 'number', defaultValue: 450, min: 100, max: 800, step: 10 },
+            { key: 'aop', label: 'Airway Open. Pressure', unit: 'cmH₂O', type: 'number', defaultValue: 0, min: 0, max: 20, step: 1, hint: 'Se não existir fechamento das vias, deixe 0.' },
+            { key: 'peep_high', label: 'Peep Alta', unit: 'cmH₂O', type: 'number', defaultValue: 15, min: 5, max: 30, step: 1 },
+            { key: 'peep_low', label: 'Peep Baixa', unit: 'cmH₂O', type: 'number', defaultValue: 5, min: 0, max: 20, step: 1 },
+            { key: 'vt_peep_high', label: 'Vt PEEP Alta', unit: 'mL', type: 'number', defaultValue: 450, min: 100, max: 1000, step: 10, hint: 'Volume inspiratório pré-configurado.' },
+            { key: 'vt_peep_low', label: 'Vt PEEP Baixa', unit: 'mL', type: 'number', defaultValue: 700, min: 100, max: 1500, step: 10, hint: 'Volume exalado ao mudar Peep Alta para Baixa.' },
+            { key: 'p_plat_low', label: 'P.Platô c/ PEEP Baixa', unit: 'cmH₂O', type: 'number', defaultValue: 18, min: 5, max: 40, step: 1 },
+        ],
+        calculate: (i) => {
+            const actual_peep_low = Math.max(i.peep_low, i.aop);
+            const delta_peep = i.peep_high - actual_peep_low;
+            const cst_low = i.vt_def / (i.p_plat_low - i.peep_low);
+            const delta_eelv_measured = i.vt_peep_low - i.vt_peep_high;
+            const delta_eelv_predicted = cst_low * delta_peep;
+            const vrec = delta_eelv_measured - delta_eelv_predicted;
+            const crec = vrec / delta_peep;
+            const ri_ratio = crec / cst_low;
+
+            return {
+                value: ri_ratio.toFixed(2),
+                unit: 'R/I ratio',
+                interpretation: ri_ratio >= 0.5 ? '✅ Alta Recrutabilidade' : '❌ Baixa Recrutabilidade',
+                level: ri_ratio >= 0.5 ? 'normal' : 'moderate',
+                extra: { 'Vrec': `${Math.round(vrec)} mL`, 'Crec': `${crec.toFixed(1)} mL/cmH₂O`, 'Cst Baixa': `${cst_low.toFixed(1)}` }
+            };
+        },
+        references: ['Chen et al., Am J Respir Crit Care Med 2020'],
+    },
+
+    // ─ 19. PI/PE MÁXIMAS ──────────────────────────────────────────
+    {
+        id: 'pipe_max',
+        name: 'PI e PE Máximas',
+        shortName: 'PI/PE Máximas',
+        category: 'mecanica',
+        description: 'Avalia força muscular respiratória. Comparação com valores preditos.',
+        icon: '💪',
+        formula: '♂ PI = 120 − (0,41 × idade) | PE = 174 − (0,83 × idade)\n♀ PI = 108 − (0,61 × idade) | PE = 131 − (0,85 × idade)',
+        fields: [
+            { key: 'sexo', label: 'Sexo', type: 'select', defaultValue: 1, options: [{ value: 1, label: '♂ Masculino' }, { value: 0, label: '♀ Feminino' }] },
+            { key: 'idade', label: 'Idade', unit: 'anos', type: 'number', defaultValue: 50, min: 18, max: 100, step: 1 },
+            { key: 'pi_val', label: 'PImáx obtida', unit: 'cmH₂O', type: 'number', defaultValue: 60, min: 0, max: 200, step: 1 },
+            { key: 'pe_val', label: 'PEmáx obtida', unit: 'cmH₂O', type: 'number', defaultValue: 80, min: 0, max: 250, step: 1 },
+        ],
+        calculate: (i) => {
+            const pi_pred = i.sexo === 1 ? 120 - (0.41 * i.idade) : 108 - (0.61 * i.idade);
+            const pe_pred = i.sexo === 1 ? 174 - (0.83 * i.idade) : 131 - (0.85 * i.idade);
+            const pi_pct = (i.pi_val / pi_pred) * 100;
+            const pe_pct = (i.pe_val / pe_pred) * 100;
+
+            return {
+                value: `PI: ${Math.round(pi_pct)}% | PE: ${Math.round(pe_pct)}%`,
+                unit: '% do Predito',
+                interpretation: pi_pct < 70 ? '⚠️ Fraqueza muscular respiratória detectada' : '✅ Força preservada',
+                level: pi_pct < 70 ? 'moderate' : 'normal',
+                extra: { 'PI Predita': `${Math.round(pi_pred)} cmH₂O`, 'PE Predita': `${Math.round(pe_pred)} cmH₂O` }
+            };
+        },
+        references: ['Black & Hyatt, 1969'],
+    },
+
+    // ─ 9. GASOMETRIA ARTERIAL ──────────────────────────────────
+    {
+        id: 'gasometria',
+        name: 'Gasometria Arterial',
+        shortName: 'Gasometria',
+        category: 'gasometria',
+        description: 'Interpretação completa de distúrbios ácido-básicos e oxigenação.',
+        icon: '🩸',
+        formula: 'Interpretação via pH, PaCO₂ e HCO₃⁻',
+        fields: [
+            { key: 'ph', label: 'pH', unit: '', type: 'number', defaultValue: 7.40, min: 6.8, max: 7.8, step: 0.01 },
+            { key: 'paco2', label: 'PaCO₂', unit: 'mmHg', type: 'number', defaultValue: 40, min: 10, max: 120, step: 1 },
+            { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', type: 'number', defaultValue: 24, min: 2, max: 50, step: 0.5 },
+            { key: 'pao2', label: 'PaO₂', unit: 'mmHg', type: 'number', defaultValue: 90, min: 20, max: 500, step: 1 },
+            { key: 'sat', label: 'SatO₂', unit: '%', type: 'number', defaultValue: 96, min: 50, max: 100, step: 1 },
+            { key: 'be', label: 'B.E. (Base Excess)', unit: 'mEq/L', type: 'number', defaultValue: 0, min: -30, max: 30, step: 0.1 },
+        ],
+        calculate: (i) => {
+            const phStatus = i.ph < 7.35 ? 'Acidemia' : i.ph > 7.45 ? 'Alcalemia' : 'Normal';
+            let disturbio = 'Equilíbrio Ácido-Básico Normal';
             let compensacao = '';
 
             if (i.ph < 7.35) { // Acidose
                 if (i.paco2 > 45 && i.hco3 >= 22) {
                     disturbio = 'Acidose Respiratória';
-                    const hco3_esperado = 24 + (i.paco2 - 40) / 10;
-                    compensacao = i.hco3 > hco3_esperado + 3 ? 'Parcialmente compensada (Crônica?)' : 'Aguda / Não compensada';
+                    const hco3_esp = 24 + (i.paco2 - 40) / 10;
+                    compensacao = i.hco3 > hco3_esp + 2 ? 'Crônica' : 'Aguda';
                 } else if (i.hco3 < 22 && i.paco2 <= 45) {
                     disturbio = 'Acidose Metabólica';
-                    const paco2_esperado = (1.5 * i.hco3) + 8;
-                    const margem = 2;
-                    if (i.paco2 < paco2_esperado - margem) compensacao = 'Alcalose Respiratória Associada';
-                    else if (i.paco2 > paco2_esperado + margem) compensacao = 'Acidose Respiratória Associada';
-                    else compensacao = 'Compensada';
+                    const paco2_esp = (1.5 * i.hco3) + 8;
+                    compensacao = Math.abs(i.paco2 - paco2_esp) <= 2 ? 'Compensada' : 'Não compensada';
                 } else if (i.paco2 > 45 && i.hco3 < 22) {
-                    disturbio = 'Acidose Mista (Respiratória + Metabólica)';
+                    disturbio = 'Acidose Mista';
                 }
             } else if (i.ph > 7.45) { // Alcalose
                 if (i.paco2 < 35 && i.hco3 <= 26) {
                     disturbio = 'Alcalose Respiratória';
-                    const hco3_esperado = 24 - (2 * (40 - i.paco2) / 10);
-                    compensacao = i.hco3 < hco3_esperado - 3 ? 'Parcialmente compensada' : 'Aguda';
+                    const hco3_esp = 24 - (2 * (40 - i.paco2) / 10);
+                    compensacao = i.hco3 < hco3_esp - 2 ? 'Crônica' : 'Aguda';
                 } else if (i.hco3 > 26 && i.paco2 >= 35) {
                     disturbio = 'Alcalose Metabólica';
-                    const paco2_esperado = (0.7 * i.hco3) + 21;
-                    if (Math.abs(i.paco2 - paco2_esperado) <= 2) compensacao = 'Compensada';
-                    else compensacao = 'Não compensada';
+                    const paco2_esp = (0.7 * i.hco3) + 21;
+                    compensacao = Math.abs(i.paco2 - paco2_esp) <= 2 ? 'Compensada' : 'Não compensada';
                 } else if (i.paco2 < 35 && i.hco3 > 26) {
                     disturbio = 'Alcalose Mista';
                 }
             }
 
-            const agStatus = ag > 12 ? `Elevado (> 12)` : 'Normal';
-            const pao2Status = i.pao2 < 60 ? 'Hipoxemia Grave' : i.pao2 < 80 ? 'Hipoxemia Leve/Mod' : 'Normal';
-
             return {
-                value: Math.round(ag * 10) / 10,
-                unit: 'mEq/L (AG)',
-                interpretation: `${phStatus} | ${disturbio} ${compensacao ? '(' + compensacao + ')' : ''} | AG: ${agStatus} | PaO₂: ${pao2Status}`,
+                value: phStatus,
+                unit: '',
+                interpretation: `${disturbio} ${compensacao ? '(' + compensacao + ')' : ''} | BE: ${i.be} | Sat: ${i.sat}%`,
                 level: i.ph >= 7.35 && i.ph <= 7.45 ? 'normal' : i.ph < 7.20 || i.ph > 7.55 ? 'severe' : 'moderate',
-                extra: {
-                    'Distúrbio Primário': disturbio,
-                    'Compensação': compensacao || 'N/A',
-                    'Ânion Gap': `${Math.round(ag)} mEq/L`,
-                    'PaO₂ status': pao2Status
-                },
             };
         },
     },
@@ -334,46 +382,29 @@ export const calculators: Calculator[] = [
         references: ['Roca et al., Am J Respir Crit Care Med 2019'],
     },
 
-    // ─ 12. ÂNION GAP ESTENDIDO (DELTA-DELTA) ─────────────────────
+    // ─ 12. ÂNION GAP ─────────────────────────────────────────────
     {
-        id: 'anion_gap_delta',
-        name: 'Ânion Gap + Delta Gap + Delta Relação',
-        shortName: 'Ânion Gap Avançado',
+        id: 'anion_gap',
+        name: 'Ânion Gap',
+        shortName: 'Anion Gap',
         category: 'gasometria',
-        description: 'Cálculo do AG corrigido pela albumina e avaliação de distúrbios mistos com Delta-Delta e Delta Relação.',
-        icon: '⚗️',
-        formula: 'AG = Na⁺ − (Cl⁻ + HCO₃⁻)\nAG corrigido = AG + 2,5 × (4 − Alb)\nΔ-Δ = (AG − 12) − (24 − HCO₃⁻)',
+        description: 'Diferença entre cátions e ânions mensurados. Identifica causas de acidose metabólica.',
+        icon: '⚖️',
+        formula: 'AG = Na⁺ − (Cl⁻ + HCO₃⁻)\nNormal: 8 a 12 mEq/L',
         fields: [
-            { key: 'na', label: 'Na⁺', unit: 'mEq/L', type: 'number', defaultValue: 140, min: 110, max: 170, step: 1 },
-            { key: 'cl', label: 'Cl⁻', unit: 'mEq/L', type: 'number', defaultValue: 105, min: 80, max: 140, step: 1 },
-            { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', type: 'number', defaultValue: 24, min: 5, max: 50, step: 0.5 },
-            { key: 'albumina', label: 'Albumina', unit: 'g/dL', type: 'number', defaultValue: 4.0, min: 1.0, max: 6.0, step: 0.1, hint: 'Normal: 3,5–4,5 g/dL. Hipoalbuminemia subestima o AG real.' },
+            { key: 'na', label: 'Sódio (Na⁺)', unit: 'mEq/L', type: 'number', defaultValue: 140, min: 110, max: 170, step: 1 },
+            { key: 'cl', label: 'Cloro (Cl⁻)', unit: 'mEq/L', type: 'number', defaultValue: 105, min: 80, max: 140, step: 1 },
+            { key: 'hco3', label: 'Bicarbonato (HCO₃⁻)', unit: 'mEq/L', type: 'number', defaultValue: 24, min: 2, max: 50, step: 0.5 },
         ],
         calculate: (i) => {
             const ag = i.na - (i.cl + i.hco3);
-            const ag_corrigido = ag + 2.5 * (4 - i.albumina);
-            const delta_delta = (ag - 12) - (24 - i.hco3);
-            const delta_relacao = (ag - 12) / (24 - i.hco3);
-            const interpretacao_delta =
-                delta_delta < -6 ? 'Acidose metabólica normal (hiperclorêmica) concomitante' :
-                    delta_delta > 6 ? 'Alcalose metabólica concomitante' :
-                        'Sem distúrbio misto detectado';
-            const ag_status = ag_corrigido > 16 ? '🔴 AG elevado — acidose com AG' : ag_corrigido > 12 ? '🟡 Limítrofe' : '✅ Normal';
             return {
-                value: Math.round(ag_corrigido * 10) / 10,
-                unit: 'mEq/L (AG corrigido)',
-                interpretation: `AG: ${Math.round(ag)} | AG corrigido (Alb): ${Math.round(ag_corrigido * 10) / 10} — ${ag_status} | ΔΔ = ${delta_delta.toFixed(1)} → ${interpretacao_delta}`,
-                level: ag_corrigido > 16 ? 'severe' : ag_corrigido > 12 ? 'mild' : 'normal',
-                extra: {
-                    'AG bruto': `${Math.round(ag)} mEq/L`,
-                    'AG corrigido': `${Math.round(ag_corrigido * 10) / 10} mEq/L`,
-                    'Delta-Delta': delta_delta.toFixed(1),
-                    'Delta Relação': delta_relacao.toFixed(2),
-                    'Interpretação ΔΔ': interpretacao_delta,
-                },
+                value: Math.round(ag * 10) / 10,
+                unit: 'mEq/L',
+                interpretation: ag > 12 ? '🔴 Elevado (> 12) — Sugere acidose com AG elevado' : ag >= 8 ? '✅ Normal (8–12)' : '🔵 Baixo (< 8)',
+                level: ag > 12 ? 'severe' : ag >= 8 ? 'normal' : 'mild',
             };
         },
-        references: ['Kaplan LJ, Kellum JA. Crit Care 2004'],
     },
 
     // ─ 13. VOLUME MINUTO ─────────────────────────────────────────
@@ -475,11 +506,115 @@ export const calculators: Calculator[] = [
                 extra: {
                     'RC': `${rc_ms} ms (${(rc).toFixed(2)} s)`,
                     'T_exp recomendado': `≥ ${(rc * 3).toFixed(1)}s (3×RC)`,
-                    'Risco auto-PEEP': rc_ms > 1000 ? 'Alto' : rc_ms > 500 ? 'Moderado' : 'Baixo',
+                    'RMD': rc_ms > 1000 ? 'Alto' : rc_ms > 500 ? 'Moderado' : 'Baixo',
                 },
             };
         },
         references: ['Marini JJ. Respir Care 1990'],
+    },
+
+    // ─ 16. PESO PREDITO E VOLUME CORRENTE (PBW) ───────────────────
+    {
+        id: 'pbw',
+        name: 'Peso Predito e Volume Corrente',
+        shortName: 'Peso e Volume',
+        category: 'ventilacao',
+        description: 'Estima o Peso Corporal Predito e volumes para ventilação protetora.',
+        icon: '⚖️',
+        formula: '♂ PBW = 50 + 0,91 × (altura − 152,4) | ♀ PBW = 45,5 + ...',
+        fields: [
+            { key: 'sexo', label: 'Sexo', type: 'select', defaultValue: 1, options: [{ value: 1, label: '♂ Masculino' }, { value: 0, label: '♀ Feminino' }] },
+            { key: 'altura', label: 'Altura (cm)', unit: 'cm', type: 'number', defaultValue: 170, min: 140, max: 220, step: 1 },
+        ],
+        calculate: (i) => {
+            const base = i.sexo === 1 ? 50 : 45.5;
+            const pbw = base + 0.91 * (i.altura - 152.4);
+            const v6 = Math.round(pbw * 6);
+            const v8 = Math.round(pbw * 8);
+            return {
+                value: Math.round(pbw * 10) / 10,
+                unit: 'kg (PBW)',
+                interpretation: `Volume Corrente sugerido:\n6 mL/kg: ${v6} mL\n8 mL/kg: ${v8} mL`,
+                level: 'normal',
+                extra: { '6 mL/kg': `${v6} mL`, '8 mL/kg': `${v8} mL`, 'Altura': `${i.altura} cm` }
+            };
+        },
+    },
+
+    // ─ 17. GRADIENTE ALVÉOLO-ARTERIAL (A-a) ───────────────────────
+    {
+        id: 'gradiente_aa',
+        name: 'Gradiente Alvéolo-Arterial (A-a)',
+        shortName: 'Gradiente A-a',
+        category: 'oxigenacao',
+        description: 'Diferença entre oxigênio alveolar e arterial.',
+        icon: '📐',
+        formula: 'PAO₂ = (Patm − 47) × FiO₂ − (PaCO₂ ÷ 0,8)\nGradiente = PAO₂ − PaO₂',
+        fields: [
+            { key: 'pao2', label: 'PaO₂', unit: 'mmHg', type: 'number', defaultValue: 75, min: 20, max: 600, step: 1 },
+            { key: 'paco2', label: 'PaCO₂', unit: 'mmHg', type: 'number', defaultValue: 40, min: 10, max: 120, step: 1 },
+            { key: 'fio2', label: 'FiO₂', unit: '%', type: 'number', defaultValue: 21, min: 21, max: 100, step: 1 },
+            { key: 'patm', label: 'Patm', unit: 'mmHg', type: 'number', defaultValue: 760, min: 500, max: 800, step: 1 },
+            { key: 'idade', label: 'Idade *', unit: 'anos', type: 'number', defaultValue: 40, min: 1, max: 110, step: 1, hint: 'Opcional. Permite cálculo do valor normal.' },
+        ],
+        calculate: (i) => {
+            const pao2_alv = (i.patm - 47) * (i.fio2 / 100) - (i.paco2 / 0.8);
+            const grad = pao2_alv - i.pao2;
+            const ref = 2.5 + (0.21 * i.idade);
+            return {
+                value: Math.round(grad * 10) / 10,
+                unit: 'mmHg',
+                interpretation: i.idade ? (grad > ref ? `⚠️ Elevado (Normal: ≤${ref.toFixed(1)})` : '✅ Normal') : 'Gradiente calculado.',
+                level: i.idade ? (grad > ref ? 'moderate' : 'normal') : 'normal',
+                extra: { 'PAO₂ Alveolar': `${Math.round(pao2_alv)} mmHg`, 'Normal ref': `${ref.toFixed(1)} mmHg` }
+            };
+        },
+    },
+
+    // ─ 18. PACO2 ESPERADA (ACIDOSE MET) ──────────────────────────
+    {
+        id: 'paco2_met_acid',
+        name: 'PaCO₂ Esperada (Acidose Metabólica)',
+        shortName: 'PaCO₂ Acidose',
+        category: 'gasometria',
+        description: 'Calcula a compensação respiratória na acidose metabólica (Winter).',
+        icon: '🧪',
+        formula: 'PaCO₂ = (1,5 × HCO₃⁻) + 8 ± 2',
+        fields: [
+            { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', type: 'number', defaultValue: 15, min: 5, max: 40, step: 0.5 },
+        ],
+        calculate: (i) => {
+            const esp = (1.5 * i.hco3) + 8;
+            return {
+                value: `${Math.round((esp - 2) * 10) / 10} - ${Math.round((esp + 2) * 10) / 10}`,
+                unit: 'mmHg',
+                interpretation: `Faixa de PaCO₂ esperada para compensação metabólica.`,
+                level: 'normal',
+            };
+        },
+    },
+
+    // ─ 19. PACO2 ESPERADA (ALCALOSE MET) ─────────────────────────
+    {
+        id: 'paco2_met_alc',
+        name: 'PaCO₂ Esperada (Alcalose Metabólica)',
+        shortName: 'PaCO₂ Alcalose',
+        category: 'gasometria',
+        description: 'Calcula a compensação respiratória na alcalose metabólica.',
+        icon: '⚗️',
+        formula: 'PaCO₂ = (0,7 × HCO₃⁻) + 21 ± 2',
+        fields: [
+            { key: 'hco3', label: 'HCO₃⁻', unit: 'mEq/L', type: 'number', defaultValue: 30, min: 10, max: 60, step: 0.5 },
+        ],
+        calculate: (i) => {
+            const esp = (0.7 * i.hco3) + 21;
+            return {
+                value: `${Math.round((esp - 2) * 10) / 10} - ${Math.round((esp + 2) * 10) / 10}`,
+                unit: 'mmHg',
+                interpretation: `Faixa de PaCO₂ esperada para compensação metabólica.`,
+                level: 'normal',
+            };
+        },
     },
 ];
 

@@ -88,7 +88,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     <div className="module-card__tag">Calculadoras</div>
                     <div className="module-card__title">Fisio Tools</div>
                     <p className="module-card__desc">
-                        20 calculadoras e escalas clínicas interativas. Insira os dados do paciente
+                        26 calculadoras e escalas clínicas interativas. Insira os dados do paciente
                         e obtenha o resultado instantaneamente.
                     </p>
                     <div className="module-card__features">

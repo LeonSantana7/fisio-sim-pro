@@ -69,7 +69,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     <div className="module-card__tag">Calculadoras</div>
                     <div className="module-card__title">Fisio Tools</div>
                     <p className="module-card__desc">
-                        15 calculadoras e escalas clínicas interativas. Insira os dados do paciente
+                        21 calculadoras e escalas clínicas interativas. Insira os dados do paciente
                         e obtenha o resultado instantaneamente.
                     </p>
                     <div className="module-card__features">
@@ -88,8 +88,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
             <div className="technology-bar">
                 {[
-                    { value: '15', label: 'Ferramentas' },
-                    { value: '11', label: 'Fontes DOI' },
+                    { value: '21', label: 'Ferramentas' },
+                    { value: '25+', label: 'Fontes DOI' },
                     { value: '1A', label: 'Evidência' },
                 ].map(t => (
                     <div key={t.label} className="tech-item">

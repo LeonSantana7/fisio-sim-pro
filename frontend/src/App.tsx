@@ -16,7 +16,7 @@ const pageConfig: Record<Page, { title: string; subtitle: string; tag: string }>
   home: { title: 'FisioSim', subtitle: 'Fisioterapia Intensivista', tag: 'v0.1.0' },
   simulator: { title: 'Simulador de Ventilação', subtitle: 'Motor Físico', tag: 'VCV / PCV' },
   protocols: { title: 'Protocolos Clínicos UTI', subtitle: 'Decisão Clínica', tag: 'SDRA · Desmame' },
-  tools: { title: 'Fisio Tools', subtitle: 'Calculadoras', tag: '15 Ferramentas' },
+  tools: { title: 'Fisio Tools', subtitle: 'Calculadoras', tag: '21 Ferramentas' },
   history: { title: 'Histórico de Cálculos', subtitle: 'Nuvem · Sincronizado', tag: 'Supabase' },
 };
 

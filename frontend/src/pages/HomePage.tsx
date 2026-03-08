@@ -12,6 +12,18 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     const { deviceKey } = useDevice();
     const { user } = useAuth();
     const [recentHistory, setRecentHistory] = useState<any[]>([]);
+    const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOffline(false);
+        const handleOffline = () => setIsOffline(true);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     useEffect(() => {
         if (!deviceKey || !user) {
@@ -129,6 +141,11 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                             <div style={{ padding: '16px 12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem', border: '1px dashed rgba(249,115,22,0.2)', borderRadius: 8, background: 'rgba(0,0,0,0.2)' }}>
                                 <Lock size={16} style={{ margin: '0 auto 6px', color: '#f97316' }} />
                                 <div>Logue para salvar seu histórico na nuvem</div>
+                            </div>
+                        ) : isOffline ? (
+                            <div style={{ padding: '16px 12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem', border: '1px dashed rgba(249,115,22,0.2)', borderRadius: 8, background: 'rgba(0,0,0,0.2)' }}>
+                                <Activity size={16} style={{ margin: '0 auto 6px', color: '#f97316' }} />
+                                <div>Você está offline. Conecte-se para puxar seu histórico.</div>
                             </div>
                         ) : recentHistory.length > 0 ? (
                             recentHistory.map((h, i) => (

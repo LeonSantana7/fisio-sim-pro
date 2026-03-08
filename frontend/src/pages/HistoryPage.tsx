@@ -10,7 +10,7 @@ export default function HistoryPage() {
     const { user } = useAuth();
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [modal, setModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type: 'danger' | 'warning' }>({
         isOpen: false, title: '', message: '', onConfirm: () => { }, type: 'danger'
@@ -21,14 +21,24 @@ export default function HistoryPage() {
             setLoading(false);
             return;
         }
+        if (!navigator.onLine) {
+            setLoading(false);
+            setError('Você está sem conexão com a internet. Conecte-se para visualizar seu histórico sincronizado.');
+            return;
+        }
+
         try {
             setLoading(true);
             const { data } = await historyService.list(deviceKey);
             setHistory(data || []);
-            setError(false);
+            setError(null);
         } catch (err) {
             console.error(err);
-            setError(true);
+            if (!navigator.onLine) {
+                setError('A conexão com a internet caiu. Conecte-se novamente para visualizar seu histórico.');
+            } else {
+                setError('Erro ao conectar com o servidor. Verifique sua rede ou tente novamente mais tarde.');
+            }
         } finally {
             setLoading(false);
         }
@@ -125,7 +135,7 @@ export default function HistoryPage() {
                 ) : error ? (
                     <div style={{ padding: '60px 20px', textAlign: 'center', color: '#f87171' }}>
                         <AlertCircle size={32} style={{ marginBottom: 12 }} />
-                        <div>Erro ao conectar com o servidor. Verifique sua rede.</div>
+                        <div>{error}</div>
                     </div>
                 ) : history.length === 0 ? (
                     <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>

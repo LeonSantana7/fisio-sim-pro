@@ -24,7 +24,7 @@ function CopyButton({ label, onCopy }: { label: string; onCopy?: () => void }) {
 }
 
 // ─── MODAL DE CALCULADORA ────────────────────────────────────────
-function CalculatorModal({ calc, onClose }: { calc: Calculator; onClose: () => void }) {
+function CalculatorModal({ calc, onClose, onShowToast }: { calc: Calculator; onClose: () => void; onShowToast: (msg: string) => void }) {
     const { deviceKey } = useDevice();
     const [values, setValues] = useState<Record<string, number>>(() => {
         const init: Record<string, number> = {};
@@ -38,6 +38,10 @@ function CalculatorModal({ calc, onClose }: { calc: Calculator; onClose: () => v
 
     const saveToHistory = useCallback(async () => {
         if (!result || !deviceKey) return;
+        if (!navigator.onLine) {
+            onShowToast('Sem internet: o cálculo não foi salvo.');
+            return;
+        }
         try {
             await historyService.add({
                 deviceKey,
@@ -50,7 +54,7 @@ function CalculatorModal({ calc, onClose }: { calc: Calculator; onClose: () => v
                 interpretation: result.interpretation,
             });
         } catch (e) { console.error('History error', e); }
-    }, [result, deviceKey, calc.id, values]);
+    }, [result, deviceKey, calc.id, values, onShowToast]);
 
     const levelColors: Record<string, string> = {
         normal: '#4ade80', mild: '#facc15', moderate: '#fb923c',
@@ -194,7 +198,7 @@ function CalculatorModal({ calc, onClose }: { calc: Calculator; onClose: () => v
 }
 
 // ─── MODAL DE ESCALA CLÍNICA ─────────────────────────────────────
-function ScaleModal({ scale, onClose }: { scale: ClinicalScale; onClose: () => void }) {
+function ScaleModal({ scale, onClose, onShowToast }: { scale: ClinicalScale; onClose: () => void; onShowToast: (msg: string) => void }) {
     const { deviceKey } = useDevice();
     const [selected, setSelected] = useState<Record<string, number>>({});
     const total = Object.values(selected).reduce((a, b: any) => a + b, 0);
@@ -203,6 +207,10 @@ function ScaleModal({ scale, onClose }: { scale: ClinicalScale; onClose: () => v
 
     const saveToHistory = useCallback(async () => {
         if (!result || !deviceKey) return;
+        if (!navigator.onLine) {
+            onShowToast('Sem internet: o cálculo não foi salvo.');
+            return;
+        }
         try {
             await historyService.add({
                 deviceKey,
@@ -215,7 +223,7 @@ function ScaleModal({ scale, onClose }: { scale: ClinicalScale; onClose: () => v
                 interpretation: result.text,
             });
         } catch (e) { console.error('History error', e); }
-    }, [result, deviceKey, scale.id, selected, total]);
+    }, [result, deviceKey, scale.id, selected, total, onShowToast]);
 
     const levelColors: Record<string, string> = {
         normal: '#4ade80', mild: '#facc15', moderate: '#fb923c', severe: '#f87171', critical: '#e11d48',
@@ -491,8 +499,8 @@ export default function ToolsPage() {
                 )}
             </div>
 
-            {activeCalc && <CalculatorModal calc={activeCalc} onClose={() => setActiveCalc(null)} />}
-            {activeScale && <ScaleModal scale={activeScale} onClose={() => setActiveScale(null)} />}
+            {activeCalc && <CalculatorModal calc={activeCalc} onClose={() => setActiveCalc(null)} onShowToast={setToast} />}
+            {activeScale && <ScaleModal scale={activeScale} onClose={() => setActiveScale(null)} onShowToast={setToast} />}
             {toast && <div className="copy-toast">{toast}</div>}
         </div>
     );

@@ -30,10 +30,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(userData);
         if (rememberMe) {
             localStorage.setItem('@FisioSim:token', newToken);
+            localStorage.setItem('@FisioSim:user', JSON.stringify(userData));
             sessionStorage.removeItem('@FisioSim:token');
+            sessionStorage.removeItem('@FisioSim:user');
         } else {
             sessionStorage.setItem('@FisioSim:token', newToken);
+            sessionStorage.setItem('@FisioSim:user', JSON.stringify(userData));
             localStorage.removeItem('@FisioSim:token');
+            localStorage.removeItem('@FisioSim:user');
         }
         setAuthToken(newToken);
     };
@@ -42,27 +46,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setToken(null);
         setUser(null);
         localStorage.removeItem('@FisioSim:token');
+        localStorage.removeItem('@FisioSim:user');
         sessionStorage.removeItem('@FisioSim:token');
+        sessionStorage.removeItem('@FisioSim:user');
         setAuthToken(null);
     };
 
     const checkAuth = async () => {
         setIsLoading(true);
         const storedToken = localStorage.getItem('@FisioSim:token') || sessionStorage.getItem('@FisioSim:token');
+        const storedUser = localStorage.getItem('@FisioSim:user') || sessionStorage.getItem('@FisioSim:user');
 
         if (storedToken) {
             setAuthToken(storedToken);
+            if (storedUser) {
+                try {
+                    setToken(storedToken);
+                    setUser(JSON.parse(storedUser));
+                } catch (e) {
+                    console.error('Erro ao restaurar usuário do storage', e);
+                }
+            }
+
             try {
                 const response = await authApi.get('/auth/me');
                 if (response.data && response.data.user) {
                     setToken(storedToken);
                     setUser(response.data.user);
+
+                    if (localStorage.getItem('@FisioSim:token')) {
+                        localStorage.setItem('@FisioSim:user', JSON.stringify(response.data.user));
+                    } else if (sessionStorage.getItem('@FisioSim:token')) {
+                        sessionStorage.setItem('@FisioSim:user', JSON.stringify(response.data.user));
+                    }
                 } else {
                     logout();
                 }
-            } catch (err) {
-                console.error('Erro ao validar token:', err);
-                logout();
+            } catch (err: any) {
+                console.error('Erro ao validar token ou sem internet:', err);
+                if (err.response && err.response.status === 401) {
+                    logout(); // Token expirado ou inválido
+                }
+                // Se for falha de rede (ex: deslogado/offline), mantém a sessão salva localmente
             }
         }
         setIsLoading(false);

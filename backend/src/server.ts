@@ -8,7 +8,9 @@ import { protocolsRoutes } from './routes/protocols.js';
 import { scenariosRoutes } from './routes/scenarios.js';
 import { favoritesRoutes } from './routes/favorites.js';
 import { historyRoutes } from './routes/history.js';
+import { authRoutes } from './routes/auth.js';
 import { prisma } from './lib/prisma.js';
+import jwt from '@fastify/jwt';
 
 const app = Fastify({
     ignoreTrailingSlash: true,
@@ -30,6 +32,10 @@ await app.register(cors, {
 
 await app.register(sensible);
 
+await app.register(jwt, {
+    secret: process.env.JWT_SECRET || 'super-secret-key-mudar-em-prod',
+});
+
 // ─── Health check ─────────────────────────────────────────────────
 app.get('/health', async () => {
     try {
@@ -41,6 +47,7 @@ app.get('/health', async () => {
 });
 
 // ─── Rotas da API ─────────────────────────────────────────────────
+await app.register(authRoutes, { prefix: '/api/auth' });
 await app.register(calculatorsRoutes, { prefix: '/api/calculators' });
 await app.register(protocolsRoutes, { prefix: '/api/protocols' });
 await app.register(scenariosRoutes, { prefix: '/api/scenarios' });

@@ -12,9 +12,11 @@ const api = axios.create({
     },
 });
 
+import { authApi } from './authApi';
+
 export const historyService = {
-    async list(deviceKey: string, limit = 50) {
-        const { data } = await api.get(`history?deviceKey=${deviceKey}&limit=${limit}`);
+    async list(deviceKey: string, limit = 5000) {
+        const { data } = await authApi.get(`history?deviceKey=${deviceKey}&limit=${limit}`);
         return data;
     },
     async add(record: {
@@ -27,26 +29,26 @@ export const historyService = {
         resultLevel?: string;
         interpretation?: string;
     }) {
-        const { data } = await api.post('history', record);
+        const { data } = await authApi.post('history', record);
         return data;
     },
     async clear(deviceKey: string) {
-        const { data } = await api.delete(`history?deviceKey=${deviceKey}`);
+        const { data } = await authApi.delete(`history?deviceKey=${deviceKey}`);
         return data;
     },
     async deleteById(id: string) {
-        const { data } = await api.delete(`history/${id}`);
+        const { data } = await authApi.delete(`history/${id}`);
         return data;
     },
 };
 
 export const favoriteService = {
     async list(deviceKey: string) {
-        const { data } = await api.get(`favorites?deviceKey=${deviceKey}`);
+        const { data } = await authApi.get(`favorites?deviceKey=${deviceKey}`);
         return data;
     },
     async toggle(deviceKey: string, toolId: string, toolType: 'calculator' | 'scale') {
-        const { data } = await api.post('favorites/toggle', { deviceKey, toolId, toolType });
+        const { data } = await authApi.post('favorites/toggle', { deviceKey, toolId, toolType });
         return data;
     },
 };

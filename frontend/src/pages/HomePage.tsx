@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Wind, Brain, ArrowRight, Activity, Shield, Zap, Calculator, History, Clock, Star } from 'lucide-react';
+import { Wind, Brain, ArrowRight, Activity, Shield, Zap, Calculator, History, Clock, Star, Lock } from 'lucide-react';
 import { useDevice } from '../hooks/useDevice';
 import { historyService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HomePageProps {
     onNavigate: (page: string) => void;
@@ -9,10 +10,14 @@ interface HomePageProps {
 
 export default function HomePage({ onNavigate }: HomePageProps) {
     const { deviceKey } = useDevice();
+    const { user } = useAuth();
     const [recentHistory, setRecentHistory] = useState<any[]>([]);
 
     useEffect(() => {
-        if (!deviceKey) return;
+        if (!deviceKey || !user) {
+            setRecentHistory([]);
+            return;
+        }
         const loadRecent = async () => {
             try {
                 const { data } = await historyService.list(deviceKey);
@@ -22,7 +27,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             }
         };
         loadRecent();
-    }, [deviceKey]);
+    }, [deviceKey, user]);
 
     return (
         <div>
@@ -105,7 +110,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 </div>
 
                 {/* Módulo 4: Histórico */}
-                <div className="module-card orange" onClick={() => onNavigate('history')}>
+                <div
+                    className={`module-card orange ${!user ? 'disabled-card' : ''}`}
+                    onClick={() => {
+                        if (user) onNavigate('history');
+                        else onNavigate('auth');
+                    }}
+                    style={!user ? { opacity: 0.7, filter: 'grayscale(0.5)' } : {}}
+                >
                     <div className="module-card__icon">🕒</div>
                     <div className="module-card__tag" style={{ background: 'rgba(249,115,22,0.15)', color: '#fdba74' }}>Histórico</div>
                     <div className="module-card__title">Cálculos Recentes</div>
@@ -113,7 +125,12 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         Acesse rapidamente seus últimos cálculos sincronizados em tempo real.
                     </p>
                     <div className="module-card__history-preview" style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {recentHistory.length > 0 ? (
+                        {!user ? (
+                            <div style={{ padding: '16px 12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem', border: '1px dashed rgba(249,115,22,0.2)', borderRadius: 8, background: 'rgba(0,0,0,0.2)' }}>
+                                <Lock size={16} style={{ margin: '0 auto 6px', color: '#f97316' }} />
+                                <div>Logue para salvar seu histórico na nuvem</div>
+                            </div>
+                        ) : recentHistory.length > 0 ? (
                             recentHistory.map((h, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: '0.72rem' }}>
                                     {h.toolType === 'scale' ? <Star size={12} color="#facc15" /> : <Calculator size={12} color="#38bdf8" />}
@@ -129,14 +146,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                         )}
                     </div>
                     <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 6, color: '#fdba74', fontSize: '0.82rem', fontWeight: 700 }}>
-                        <History size={16} /> Ver Histórico Completo <ArrowRight size={14} />
+                        {!user ? <><Lock size={16} /> Fazer Login para Acessar</> : <><History size={16} /> Ver Histórico Completo <ArrowRight size={14} /></>}
                     </div>
                 </div>
             </div>
 
             <div className="technology-bar">
                 {[
-                    { value: '20', label: 'Ferramentas' },
+                    { value: '29', label: 'Ferramentas' },
                     { value: '20+', label: 'Fontes DOI' },
                     { value: '1A', label: 'Evidência' },
                 ].map(t => (

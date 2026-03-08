@@ -9,8 +9,9 @@ import SimulatorPage from './pages/SimulatorPage';
 import ProtocolsPage from './pages/ProtocolsPage';
 import ToolsPage from './pages/ToolsPage';
 import HistoryPage from './pages/HistoryPage';
+import AuthPage from './pages/AuthPage';
 
-export type Page = 'home' | 'simulator' | 'protocols' | 'tools' | 'history';
+export type Page = 'home' | 'simulator' | 'protocols' | 'tools' | 'history' | 'auth';
 
 const pageConfig: Record<Page, { title: string; subtitle: string; tag: string }> = {
   home: { title: 'FisioSim', subtitle: 'Fisioterapia Intensivista', tag: 'v0.1.0' },
@@ -18,6 +19,7 @@ const pageConfig: Record<Page, { title: string; subtitle: string; tag: string }>
   protocols: { title: 'Protocolos Clínicos UTI', subtitle: 'Decisão Clínica', tag: 'SDRA · Desmame' },
   tools: { title: 'Fisio Tools', subtitle: 'Calculadoras', tag: '20 Ferramentas' },
   history: { title: 'Histórico de Cálculos', subtitle: 'Nuvem · Sincronizado', tag: 'Supabase' },
+  auth: { title: 'Autenticação', subtitle: 'Conta do Usuário', tag: 'Acesso Seguro' },
 };
 
 export default function App() {
@@ -93,13 +95,19 @@ export default function App() {
   return (
     <div className="app-layout">
       <Sidebar activePage={currentPage} onNavigate={navigate} />
-      <TopBar title={cfg.title} subtitle={cfg.subtitle} tag={cfg.tag} />
+      <TopBar
+        title={cfg.title}
+        subtitle={cfg.subtitle}
+        tag={cfg.tag}
+        onNavigate={setCurrentPage}
+      />
       <main className="main-content" ref={mainRef}>
         {currentPage === 'home' && <HomePage onNavigate={navigate} />}
         {currentPage === 'simulator' && <SimulatorPage />}
         {currentPage === 'protocols' && <ProtocolsPage />}
         {currentPage === 'tools' && <ToolsPage />}
         {currentPage === 'history' && <HistoryPage />}
+        {currentPage === 'auth' && <AuthPage onNavigate={navigate} />}
       </main>
     </div>
   );

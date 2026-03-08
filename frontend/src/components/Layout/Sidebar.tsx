@@ -1,4 +1,5 @@
-import { Activity, Brain, Home, Wind, Calculator, Stethoscope, Accessibility } from 'lucide-react';
+import { Activity, Brain, Home, Wind, Calculator, Stethoscope, Accessibility, LogIn, LogOut } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
     activePage: string;
@@ -14,6 +15,7 @@ const navItems = [
 ];
 
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
+    const { user, logout } = useAuth();
     const toggleAccessibility = () => {
         // @ts-ignore
         if (window.accessibilityInstance && typeof window.accessibilityInstance.toggleMenu === 'function') {
@@ -71,6 +73,18 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
                         <Accessibility className="nav-item__icon" size={18} />
                         <span className="sidebar__nav-label">Acessibilidade</span>
                     </button>
+                    <div className="sidebar__section-title" style={{ marginTop: 16, marginBottom: 8, paddingLeft: 12 }}>Usuário</div>
+                    {user ? (
+                        <button className="nav-item" onClick={() => { logout(); onNavigate('home'); }} data-label="Sair" title="Sair">
+                            <LogOut className="nav-item__icon" size={18} color="#ef4444" />
+                            <span className="sidebar__nav-label" style={{ color: '#ef4444' }}>Sair ({user.name?.split(' ')[0]})</span>
+                        </button>
+                    ) : (
+                        <button className={`nav-item${activePage === 'auth' ? ' active' : ''}`} onClick={() => onNavigate('auth')} data-label="Entrar" title="Entrar">
+                            <LogIn className="nav-item__icon" size={18} />
+                            <span className="sidebar__nav-label">Entrar</span>
+                        </button>
+                    )}
                 </nav>
 
                 <div className="sidebar__status" style={{ margin: '24px 12px 0', padding: '14px', background: 'rgba(14,165,233,0.06)', borderRadius: '12px', border: '1px solid rgba(56,189,248,0.15)' }}>

@@ -13,11 +13,19 @@ const RemoveFavoriteParams = z.object({
 });
 
 export class FavoriteController {
-    static async listByDevice(req: FastifyRequest<{ Querystring: { deviceKey: string } }>, reply: FastifyReply) {
+    static async listByUserOrDevice(req: FastifyRequest<{ Querystring: { deviceKey: string } }>, reply: FastifyReply) {
         const { deviceKey } = req.query;
         if (!deviceKey) return reply.code(400).send({ error: 'deviceKey é obrigatório' });
 
-        const favorites = await FavoriteService.listByDevice(deviceKey);
+        let userId: string | undefined;
+        try {
+            await req.jwtVerify();
+            userId = (req.user as any)?.sub;
+        } catch {
+            // Not authenticated, fallback
+        }
+
+        const favorites = await FavoriteService.listByUserOrDevice(deviceKey, userId);
         return reply.send({ data: favorites, total: favorites.length });
     }
 
@@ -25,10 +33,16 @@ export class FavoriteController {
         const parsed = AddFavoriteBody.safeParse(req.body);
         if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
 
+        let userId: string | undefined;
+        try {
+            await req.jwtVerify();
+            userId = (req.user as any)?.sub;
+        } catch { }
+
         const { deviceKey, toolId, toolType } = parsed.data;
         const userAgent = req.headers['user-agent'];
 
-        const result = await FavoriteService.add(deviceKey, toolId, toolType, userAgent);
+        const result = await FavoriteService.addByUserOrDevice(deviceKey, toolId, toolType, userAgent, userId);
         return reply.code(result.created ? 201 : 200).send(result);
     }
 
@@ -44,13 +58,19 @@ export class FavoriteController {
         }
     }
 
-    static async removeByTool(req: FastifyRequest<{ Querystring: { deviceKey: string; toolId: string; toolType: string } }>, reply: FastifyReply) {
+    static async removeByToolAndUserOrDevice(req: FastifyRequest<{ Querystring: { deviceKey: string; toolId: string; toolType: string } }>, reply: FastifyReply) {
         const { deviceKey, toolId, toolType } = req.query;
         if (!deviceKey || !toolId || !toolType)
             return reply.code(400).send({ error: 'deviceKey, toolId e toolType são obrigatórios' });
 
+        let userId: string | undefined;
         try {
-            await FavoriteService.removeByTool(deviceKey, toolId, toolType);
+            await req.jwtVerify();
+            userId = (req.user as any)?.sub;
+        } catch { }
+
+        try {
+            await FavoriteService.removeByToolAndUserOrDevice(deviceKey, toolId, toolType, userId);
             return reply.code(204).send();
         } catch {
             return reply.code(404).send({ error: 'Dispositivo ou favorito não encontrado' });
@@ -61,8 +81,14 @@ export class FavoriteController {
         const parsed = AddFavoriteBody.safeParse(req.body);
         if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
 
+        let userId: string | undefined;
+        try {
+            await req.jwtVerify();
+            userId = (req.user as any)?.sub;
+        } catch { }
+
         const { deviceKey, toolId, toolType } = parsed.data;
-        const favorites = await FavoriteService.listByDevice(deviceKey);
+        const favorites = await FavoriteService.listByUserOrDevice(deviceKey, userId);
         const existing = favorites.find(f => f.toolId === toolId);
 
         if (existing) {
@@ -70,7 +96,7 @@ export class FavoriteController {
             return reply.send({ data: { removed: true, toolId } });
         } else {
             const userAgent = req.headers['user-agent'];
-            const record = await FavoriteService.add(deviceKey, toolId, toolType, userAgent);
+            const record = await FavoriteService.addByUserOrDevice(deviceKey, toolId, toolType, userAgent, userId);
             return reply.code(201).send({ data: { ...record, success: true } });
         }
     }

@@ -104,6 +104,89 @@ export function generatePCVCurve(
 }
 
 /**
+ * Gera as curvas para o modo PSV (Pressão de Suporte) - Ciclado a Fluxo e não a tempo
+ * Apresenta demonstração de assincronias: Duplo Disparo e Esforço Ineficaz
+ */
+export function generatePSVCurve(
+    p: VentilatorParams,
+    m: PatientMechanics,
+    dt_ms: number = DT_MS
+): SimPoint[] {
+    const delta_p = p.psv_cmh2o ?? 15;
+    const esens = (p.esens ?? 25) / 100;
+    const c_l = m.c_stat / 1000;
+    const tau = m.r_aw * c_l;
+
+    // PSV assume uma taxa guiada pelo paciente, usamos a definica como ideal
+    const t_cycle = 60 / p.fr;
+
+    // Ciclagem: ocorre quando o fluxo cai a X% do pico
+    // Flow(t) = PeakFlow * e^(-t/tau) => t_insp = -tau * ln(esens)
+    let t_insp_actual = -tau * Math.log(esens);
+    if (t_insp_actual < 0.3) t_insp_actual = 0.3;
+    if (t_insp_actual > 3.0) t_insp_actual = 3.0; // Backup de tempo se vazar
+
+    const vt_achieved_ml = m.c_stat * delta_p * (1 - Math.exp(-t_insp_actual / tau));
+    const points: SimPoint[] = [];
+
+    // Lógica para duplo disparo
+    const double_trigger_time = m.double_trigger ? t_insp_actual + 0.05 : 0;
+
+    for (let t_ms = 0; t_ms <= t_cycle * 1000; t_ms += dt_ms) {
+        const t = t_ms / 1000;
+        let pressure: number, volume: number, flow: number;
+
+        if (t <= t_insp_actual) {
+            // Fase inspiratória
+            volume = m.c_stat * delta_p * (1 - Math.exp(-t / tau));
+            flow = (delta_p / m.r_aw) * Math.exp(-t / tau);
+
+            // Simular a queda na pressão pelo trigger muscular do paciente inicio
+            let p_mus_effect = (t < 0.15) ? -m.p_mus : 0;
+            pressure = p.peep + delta_p + p_mus_effect;
+        } else {
+            if (m.double_trigger && t > double_trigger_time && t <= (double_trigger_time + t_insp_actual)) {
+                // Segundo disparo (Stacking) antes de esvaziar
+                const t2 = t - double_trigger_time;
+                volume = vt_achieved_ml + (m.c_stat * delta_p * (1 - Math.exp(-t2 / tau)));
+                flow = (delta_p / m.r_aw) * Math.exp(-t2 / tau);
+                let p_mus_effect = (t2 < 0.15) ? -m.p_mus : 0;
+                pressure = p.peep + delta_p + p_mus_effect;
+            } else {
+                // Fase expiratória
+                let t_exp_start = t_insp_actual;
+                let vol_start = vt_achieved_ml;
+
+                if (m.double_trigger && t > (double_trigger_time + t_insp_actual)) {
+                    t_exp_start = double_trigger_time + t_insp_actual;
+                    // Volume aproxima o empilhamento
+                    vol_start = vt_achieved_ml * 1.8;
+                }
+
+                const te = t - t_exp_start;
+                volume = vol_start * Math.exp(-te / tau);
+                flow = -(vol_start / 1000) / tau * Math.exp(-te / tau);
+                pressure = p.peep;
+
+                // Simular Esforço Ineficaz no meio da expiração
+                if (m.ineffective_effort && te > 0.8 && te < 1.1) {
+                    pressure -= (m.p_mus * 0.5); // deflexão negativa na pressao
+                    flow += 0.2; // tentativa de puxar ar mas não atinge limiar de disparo
+                }
+            }
+        }
+
+        points.push({
+            t_ms: Math.round(t_ms),
+            pressure: Math.round(pressure * 10) / 10,
+            volume: Math.round(volume * 10) / 10,
+            flow: Math.round(flow * 1000) / 1000,
+        });
+    }
+    return points;
+}
+
+/**
  * Calcula métricas derivadas — Pressão de Pico, Platô, Driving Pressure, τ
  */
 export function calcDerivedMetrics(
@@ -130,7 +213,7 @@ export function calcDerivedMetrics(
             ie_ratio,
             vol_minuto: Math.round((p.vt_ml * p.fr / 1000) * 10) / 10,
         };
-    } else {
+    } else if (p.mode === 'PCV') {
         // PCV — Volume Corrente calculado pela exponencial
         const vt_pcv = m.c_stat * p.p_insp * (1 - Math.exp(-p.t_insp / tau));
         const p_pico = p.peep + p.p_insp;
@@ -144,6 +227,30 @@ export function calcDerivedMetrics(
             ie_ratio,
             vol_minuto: Math.round((vt_pcv * p.fr / 1000) * 10) / 10,
             vt_achieved: Math.round(vt_pcv * 10) / 10,
+        };
+    } else {
+        // PSV
+        const delta_p = p.psv_cmh2o ?? 15;
+        const esens = (p.esens ?? 25) / 100;
+        let t_insp_actual = -tau * Math.log(esens);
+        if (t_insp_actual < 0.3) t_insp_actual = 0.3;
+        if (t_insp_actual > 3.0) t_insp_actual = 3.0;
+
+        const vt_psv = m.c_stat * delta_p * (1 - Math.exp(-t_insp_actual / tau));
+        const achieved_vol = m.double_trigger ? vt_psv * 1.8 : vt_psv;
+
+        const p_pico = p.peep + delta_p;
+        const p_plat = vt_psv / m.c_stat + p.peep;
+        const t_exp = 60 / p.fr - t_insp_actual;
+
+        return {
+            p_pico: Math.round(p_pico * 10) / 10,
+            p_plat: Math.round(p_plat * 10) / 10,
+            driving_pressure: delta_p,
+            tau: Math.round(tau * 1000) / 1000,
+            ie_ratio: `${t_insp_actual.toFixed(1)}:${t_exp.toFixed(1)}`,
+            vol_minuto: Math.round((achieved_vol * p.fr / 1000) * 10) / 10,
+            vt_achieved: Math.round(achieved_vol * 10) / 10,
         };
     }
 }
@@ -258,5 +365,7 @@ export function calcAlerts(
 }
 
 export function generateCurve(p: VentilatorParams, m: PatientMechanics): SimPoint[] {
-    return p.mode === 'VCV' ? generateVCVCurve(p, m) : generatePCVCurve(p, m);
+    if (p.mode === 'VCV') return generateVCVCurve(p, m);
+    if (p.mode === 'PCV') return generatePCVCurve(p, m);
+    return generatePSVCurve(p, m);
 }

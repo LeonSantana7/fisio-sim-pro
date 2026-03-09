@@ -28,4 +28,13 @@ export const clinicalScenarios: ClinicalScenario[] = [
         defaultParams: { mode: 'VCV', vt_ml: 480, fr: 14, flow_l_min: 40, peep: 5, p_insp: 15, t_insp: 0.9, fio2: 28 },
         expectedBehavior: 'Fluxo expiratório muito prolongado (τ = 1.95s). Risco de Auto-PEEP evidente — expiração incompleta antes do próximo ciclo. Pressão de pico alta por R_aw elevada.',
     },
+    {
+        id: 'weaning',
+        name: 'Desmame (PSV)',
+        description: 'Paciente em fase de desmame - Esforço respiratório presente',
+        condition: 'normal',
+        mechanics: { c_stat: 60, r_aw: 10, p_mus: 8 },
+        defaultParams: { mode: 'PSV', psv_cmh2o: 10, esens: 25, fr: 18, peep: 5, fio2: 30 },
+        expectedBehavior: 'Modo espontâneo ativado. O paciente dispara o ventilador. Observe a deflexão negativa na pressão (P_mus) e a ciclagem baseada em fluxo.',
+    },
 ];

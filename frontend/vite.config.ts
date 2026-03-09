@@ -67,7 +67,20 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/.*\.render\.com\/api\//,
+            urlPattern: /\/api\//,
+            method: 'POST',
+            handler: 'NetworkOnly',
+            options: {
+              backgroundSync: {
+                name: 'offline-api-queue',
+                options: {
+                  maxRetentionTime: 24 * 60 // 24 horas retido na fila
+                }
+              }
+            }
+          },
+          {
+            urlPattern: /\/api\//,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

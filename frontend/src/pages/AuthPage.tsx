@@ -12,12 +12,18 @@ export default function AuthPage({ onNavigate }: { onNavigate?: (page: string) =
     const [rememberMe, setRememberMe] = useState(() => window.innerWidth < 768);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isSlowResponse, setIsSlowResponse] = useState(false);
     const { login } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
+        setIsSlowResponse(false);
+
+        const slowTimeout = setTimeout(() => {
+            setIsSlowResponse(true);
+        }, 4000);
 
         try {
             if (isLogin) {
@@ -33,7 +39,9 @@ export default function AuthPage({ onNavigate }: { onNavigate?: (page: string) =
             console.error('Erro na autenticação:', err);
             setError(err.response?.data?.error || 'Ocorreu um erro. Verifique seus dados e tente novamente.');
         } finally {
+            clearTimeout(slowTimeout);
             setLoading(false);
+            setIsSlowResponse(false);
         }
     };
 
@@ -159,13 +167,24 @@ export default function AuthPage({ onNavigate }: { onNavigate?: (page: string) =
                         </label>
                     </div>
 
+                    {isSlowResponse && (
+                        <div style={{ padding: '8px 12px', background: 'rgba(234,179,8,0.1)', borderLeft: '3px solid #eab308', borderRadius: '0 8px 8px 0', fontSize: '0.75rem', color: '#fef08a', marginTop: 4 }}>
+                            <strong>O servidor adormeceu.</strong><br />Isso ocorre por inatividade para poupar recursos. Ele já está acordando, por favor aguarde até 1 minuto.
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         disabled={loading}
                         className="copy-btn"
                         style={{ marginTop: '0px', padding: '8px 16px', display: 'flex', justifyContent: 'center', opacity: loading ? 0.7 : 1, fontSize: '0.85rem' }}
                     >
-                        {loading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : (isLogin ? 'Entrar' : 'Criar Conta')}
+                        {loading ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                                {isSlowResponse ? 'Acordando servidor...' : 'Processando...'}
+                            </span>
+                        ) : (isLogin ? 'Entrar' : 'Criar Conta')}
                     </button>
                 </form>
 

@@ -12,8 +12,12 @@ import { clinicalScenarios } from '../data/scenarios';
 const DEFAULT_PARAMS: VentilatorParams = {
     mode: 'VCV', vt_ml: 450, fr: 14, flow_l_min: 40,
     peep: 5, p_insp: 15, t_insp: 1.0, fio2: 35,
+    psv_cmh2o: 12, esens: 25,
 };
-const DEFAULT_MECH: PatientMechanics = { c_stat: 60, r_aw: 10, p_mus: 0 };
+const DEFAULT_MECH: PatientMechanics = {
+    c_stat: 60, r_aw: 10, p_mus: 0,
+    double_trigger: false, ineffective_effort: false
+};
 
 function SliderRow({
     label, unit, value, min, max, step, onChange,
@@ -100,7 +104,7 @@ export default function SimulatorPage() {
                 <div className="card">
                     <div className="card__title"><Wind size={14} />Modo Ventilatório</div>
                     <div className="mode-switch">
-                        {(['VCV', 'PCV'] as const).map(m => (
+                        {(['VCV', 'PCV', 'PSV'] as const).map(m => (
                             <button key={m} className={`mode-btn${params.mode === m ? ' active' : ''}`}
                                 onClick={() => updateParam('mode', m)}>{m}</button>
                         ))}
@@ -113,6 +117,11 @@ export default function SimulatorPage() {
                     {params.mode === 'PCV' && (
                         <div style={{ marginTop: 8, fontSize: '0.72rem', color: '#64748b' }}>
                             Pressão: Constante — Fluxo: Exponencial Decrescente
+                        </div>
+                    )}
+                    {params.mode === 'PSV' && (
+                        <div style={{ marginTop: 8, fontSize: '0.72rem', color: '#64748b' }}>
+                            Modo Espontâneo: Ciclado a Fluxo (% do Pico)
                         </div>
                     )}
                 </div>
@@ -151,10 +160,46 @@ export default function SimulatorPage() {
                         {params.mode === 'PCV' && (
                             <SliderRow label="ΔP Inspiratória" unit="cmH₂O" value={params.p_insp} min={5} max={40} step={1} onChange={v => updateParam('p_insp', v)} />
                         )}
-                        <SliderRow label="Frequência Respiratória" unit="irpm" value={params.fr} min={8} max={35} step={1} onChange={v => updateParam('fr', v)} />
-                        <SliderRow label="Tempo Inspiratório (Ti)" unit="s" value={params.t_insp} min={0.3} max={1.5} step={0.05} onChange={v => updateParam('t_insp', v)} />
+                        {params.mode === 'PSV' && (
+                            <>
+                                <SliderRow label="P. Suporte (PS)" unit="cmH₂O" value={params.psv_cmh2o || 12} min={5} max={30} step={1} onChange={v => updateParam('psv_cmh2o', v)} />
+                                <SliderRow label="Sensib. Expiratória (Esens)" unit="%" value={params.esens || 25} min={5} max={70} step={5} onChange={v => updateParam('esens', v)} />
+                            </>
+                        )}
+                        <SliderRow label={params.mode === 'PSV' ? "FR Manual (Backup)" : "Frequência Respiratória"} unit="irpm" value={params.fr} min={8} max={35} step={1} onChange={v => updateParam('fr', v)} />
+                        {params.mode !== 'PSV' && (
+                            <SliderRow label="Tempo Inspiratório (Ti)" unit="s" value={params.t_insp} min={0.3} max={1.5} step={0.05} onChange={v => updateParam('t_insp', v)} />
+                        )}
                         <SliderRow label="PEEP" unit="cmH₂O" value={params.peep} min={0} max={20} step={1} onChange={v => updateParam('peep', v)} />
                         <SliderRow label="FiO₂" unit="%" value={params.fio2} min={21} max={100} step={1} onChange={v => updateParam('fio2', v)} />
+                    </div>
+                </div>
+
+                {/* Assincronias e Esforço */}
+                <div className="card">
+                    <div className="card__title">⚡ Assincronias e Esforço</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <SliderRow label="Esforço Muscular (P_mus)" unit="cmH₂O" value={mech.p_mus} min={0} max={20} step={1} onChange={v => updateMech('p_mus', v)} />
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px', background: 'rgba(239,68,68,0.05)', borderRadius: 8 }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171' }}>Duplo Disparo</span>
+                            <input
+                                type="checkbox"
+                                checked={!!mech.double_trigger}
+                                onChange={(e) => updateMech('double_trigger', e.target.checked ? 1 : 0)}
+                                style={{ accentColor: '#ef4444' }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px', background: 'rgba(239,68,68,0.05)', borderRadius: 8 }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171' }}>Esforço Ineficaz</span>
+                            <input
+                                type="checkbox"
+                                checked={!!mech.ineffective_effort}
+                                onChange={(e) => updateMech('ineffective_effort', e.target.checked ? 1 : 0)}
+                                style={{ accentColor: '#f87171' }}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -164,7 +209,6 @@ export default function SimulatorPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         <SliderRow label="Complacência Estática (C_stat)" unit="mL/cmH₂O" value={mech.c_stat} min={10} max={100} step={5} onChange={v => updateMech('c_stat', v)} />
                         <SliderRow label="Resistência de VA (R_aw)" unit="cmH₂O/L/s" value={mech.r_aw} min={5} max={50} step={5} onChange={v => updateMech('r_aw', v)} />
-                        <SliderRow label="Esforço Muscular (P_mus)" unit="cmH₂O" value={mech.p_mus} min={0} max={20} step={1} onChange={v => updateMech('p_mus', v)} />
                     </div>
                 </div>
             </div>

@@ -7,6 +7,7 @@ else if (!baseURL.endsWith('/api/')) baseURL += '/api/';
 
 const api = axios.create({
     baseURL,
+    timeout: 120000, // 2 minutos de espera pro Render acordar da inatividade
     headers: {
         'Content-Type': 'application/json',
     },

@@ -13,7 +13,21 @@ interface TopBarProps {
 export default function TopBar({ title, subtitle, tag, onNavigate }: TopBarProps) {
     const { user, logout } = useAuth();
     const [showMenu, setShowMenu] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -49,8 +63,12 @@ export default function TopBar({ title, subtitle, tag, onNavigate }: TopBarProps
             </div>
             <div className="topbar__right">
                 {tag && <span className="topbar__tag hide-on-mobile">{tag}</span>}
-                <span className="topbar__tag hide-on-mobile" style={{ background: 'rgba(34,197,94,0.1)', borderColor: 'rgba(34,197,94,0.3)', color: '#4ade80' }}>
-                    ● Evidência Nível A
+                <span className="topbar__tag hide-on-mobile" style={{
+                    background: isOnline ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                    borderColor: isOnline ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
+                    color: isOnline ? '#4ade80' : '#f87171'
+                }}>
+                    ● {isOnline ? 'Online' : 'Offline'}
                 </span>
 
                 {onNavigate && (

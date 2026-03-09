@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-// @ts-ignore
+// @ts-expect-error - external lib without types
 import { Accessibility } from 'accessibility';
 import './index.css';
 import Sidebar from './components/Layout/Sidebar';
@@ -94,7 +94,10 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      <Sidebar activePage={currentPage} onNavigate={navigate} />
+      <Sidebar
+        activePage={currentPage}
+        onNavigate={navigate}
+      />
       <TopBar
         title={cfg.title}
         subtitle={cfg.subtitle}

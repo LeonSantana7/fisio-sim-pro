@@ -127,12 +127,10 @@
   fill: #fff !important;
 }
 
-.access-icon,
+#accessibility-icon,
 .accessibility-icon,
 ._access-button,
-[class*="accessibility-icon"],
-[class*="access-button"],
-[class*="accessibility-btn"] {
+.access-icon {
   display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;

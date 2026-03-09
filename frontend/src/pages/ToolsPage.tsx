@@ -383,19 +383,36 @@ export default function ToolsPage() {
     }, [deviceKey]);
 
     const toggleFav = useCallback(async (id: string, toolType: 'calculator' | 'scale') => {
+        const isRemoving = favorites.has(id);
+
+        // Update UI immediately (Optimistic)
         setFavorites(prev => {
             const next = new Set(prev);
-            if (next.has(id)) { next.delete(id); setToast('Removido dos favoritos'); }
-            else { next.add(id); setToast('Adicionado aos favoritos ⭐'); }
+            if (isRemoving) next.delete(id);
+            else next.add(id);
             localStorage.setItem('fisio_favs', JSON.stringify([...next]));
             return next;
         });
+        setToast(isRemoving ? 'Removido dos favoritos' : 'Adicionado aos favoritos ⭐');
 
         if (deviceKey) {
-            try { await favoriteService.toggle(deviceKey, id, toolType); }
-            catch (e) { console.error('Fav sync error', e); }
+            try {
+                await favoriteService.toggle(deviceKey, id, toolType);
+            } catch (e) {
+                console.error('Fav sync error', e);
+                setToast('Erro ao sincronizar favorito. Revertendo...');
+
+                // Revert UI on failure
+                setFavorites(prev => {
+                    const next = new Set(prev);
+                    if (isRemoving) next.add(id);
+                    else next.delete(id);
+                    localStorage.setItem('fisio_favs', JSON.stringify([...next]));
+                    return next;
+                });
+            }
         }
-    }, [deviceKey]);
+    }, [deviceKey, favorites]);
 
     useEffect(() => {
         if (!toast) return;
